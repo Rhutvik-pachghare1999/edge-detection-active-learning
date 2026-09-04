@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AECS-SDC Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:#fff;color:#111;font-size:16px;line-height:1.5}
+
+#topbar{background:#f8f9fa;border-bottom:2px solid #2563eb;padding:14px 32px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-family:'IBM Plex Mono',monospace}
+.brand strong{font-size:20px;display:block}
+.brand span{color:#6b7280;font-size:14px}
+.status{display:flex;align-items:center;gap:12px;font-size:14px;color:#6b7280;font-family:'IBM Plex Mono',monospace}
+.dot{width:11px;height:11px;border-radius:50%;background:#d1d5db;animation:blink 2.5s ease-in-out infinite;flex-shrink:0}
+.dot.on{background:#16a34a}
+.dot.off{background:#dc2626}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+#rec-btn{padding:7px 20px;border:none;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;background:#dc2626;color:#fff}
+#rec-btn.active{background:#16a34a}
+
+#metrics{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid #e5e7eb}
+.card{padding:20px 24px;border-right:1px solid #e5e7eb;position:relative;cursor:default}
+.card:last-child{border-right:none}
+.card-label{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;font-family:'IBM Plex Mono',monospace;margin-bottom:6px}
+.card-value{font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:600;color:#111}
+.card[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1f2937;color:#f9fafb;font-size:12px;font-family:'IBM Plex Sans',sans-serif;padding:6px 10px;border-radius:4px;white-space:nowrap;z-index:10;pointer-events:none}
+
+#main{display:grid;grid-template-columns:65% 35%;min-height:calc(100vh - 160px)}
+#left{padding:28px 32px;border-right:1px solid #e5e7eb}
+#right{padding:28px 24px}
+.sec{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-family:'IBM Plex Mono',monospace;margin-bottom:16px}
+#chart-wrap{position:relative;height:320px}
+
+table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:28px}
+thead tr{background:#111;color:#fff}
+thead th{padding:10px 12px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:13px}
+tbody tr:nth-child(even){background:#f8f9fa}
+tbody td{padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'IBM Plex Mono',monospace}
+
+.cg{margin-bottom:16px}
+.cg label{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:6px;font-family:'IBM Plex Mono',monospace}
+.cg input[type=range]{width:100%;accent-color:#2563eb}
+.cg select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:#fff}
+.tau-val{font-family:'IBM Plex Mono',monospace;font-size:14px;color:#2563eb;margin-left:6px}
+#apply-btn{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+#apply-btn:hover{background:#1d4ed8}
+#apply-msg{font-size:12px;color:#6b7280;margin-top:6px;text-align:center;font-family:'IBM Plex Mono',monospace;min-height:18px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <strong>AECS-SDC</strong>
+    <span>Active Data Engine Monitor</span>
+  </div>
+  <div class="status">
+    <button id="rec-btn" onclick="toggleRec()">⏺ START RECORDING</button>
+    <div class="dot" id="sup-dot"></div><span id="sup-lbl">—</span>
+    &nbsp;|&nbsp;
+    <div class="dot" id="pi-dot"></div><span id="pi-lbl">—</span>
+    <span id="updated">—</span>
+  </div>
+</div>
+
+<div id="metrics">
+  <div class="card" data-tip="Number of frames processed by both models">
+    <div class="card-label">Total Frames</div>
+    <div class="card-value" id="m-frames">—</div>
+  </div>
+  <div class="card" data-tip="Frames saved as training data because models disagreed">
+    <div class="card-label">Harvested</div>
+    <div class="card-value" id="m-harvested">—</div>
+  </div>
+  <div class="card" data-tip="Percentage of frames saved — target is 5 to 10 percent">
+    <div class="card-label">Harvest Rate %</div>
+    <div class="card-value" id="m-rate">—</div>
+  </div>
+  <div class="card" data-tip="Disagreement threshold — lower means more frames get saved">
+    <div class="card-label">Current Tau</div>
+    <div class="card-value" id="m-tau">—</div>
+  </div>
+  <div class="card" data-tip="Auto-detected physical condition">
+    <div class="card-label">Scenario</div>
+    <div class="card-value" id="m-scenario" style="font-size:20px;padding-top:4px">—</div>
+  </div>
+</div>
+
+<div id="preview" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e5e7eb">
+  <div style="padding:16px 32px;border-right:1px solid #e5e7eb">
+    <div class="sec" style="margin-bottom:10px">Student — YOLOv8n</div>
+    <img id="img-student" style="width:100%;border:1px solid #e5e7eb;border-radius:4px;background:#f8f9fa;min-height:160px;display:block" alt="waiting…">
+  </div>
+  <div style="padding:16px 32px">
+    <div class="sec" style="margin-bottom:10px">Teacher — RT-DETR &nbsp;<span style="color:#16a34a;font-size:11px">● ground truth</span></div>
+    <img id="img-teacher" style="width:100%;border:1px solid #e5e7eb;border-radius:4px;background:#f8f9fa;min-height:160px;display:block" alt="waiting…">
+  </div>
+</div>
+
+<div id="main">
+  <div id="left">
+    <div class="sec">Discrepancy Signal — last 200 frames</div>
+    <div id="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+  <div id="right">
+    <div class="sec">Results by Scenario</div>
+    <table>
+      <thead><tr><th>Scenario</th><th>Frames</th><th>Harvested</th><th>Rate%</th><th>Mean Δ</th></tr></thead>
+      <tbody id="tbl"><tr><td colspan="5" style="color:#9ca3af;text-align:center;padding:12px">No data yet</td></tr></tbody>
+    </table>
+
+    <div class="sec">Controls</div>
+    <div class="cg">
+      <label>Tau <span class="tau-val" id="tau-val">0.25</span></label>
+      <input type="range" id="tau" min="0.05" max="0.80" step="0.01" value="0.25"
+             oninput="document.getElementById('tau-val').textContent=parseFloat(this.value).toFixed(2)">
+    </div>
+    <div class="cg">
+      <label>Scenario</label>
+      <select id="sel-scenario">
+        <option>nominal</option><option>low_light</option><option>occlusion</option><option>motion</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label>Sensitivity</label>
+      <select id="sel-sens"><option>normal</option><option>high</option><option>low</option></select>
+    </div>
+    <button id="apply-btn" onclick="applyConfig()">Apply</button>
+    <div id="apply-msg"></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let _rec = false, tick = 0;
+
+// Chart
+const chart = new Chart(document.getElementById('chart').getContext('2d'), {
+  type: 'line',
+  data: { labels: [], datasets: [
+    { label:'delta',     data:[], borderColor:'#16a34a', backgroundColor:'transparent', borderWidth:1.5, pointRadius:0, tension:0.2 },
+    { label:'entropy',   data:[], borderColor:'#9ca3af', backgroundColor:'transparent', borderWidth:1.5, borderDash:[4,3], pointRadius:0, tension:0.2 },
+    { label:'harvested', data:[], borderColor:'transparent', backgroundColor:'#dc2626', pointRadius:5, showLine:false },
+    { label:'tau',       data:[], borderColor:'#2563eb', backgroundColor:'transparent', borderWidth:1, borderDash:[6,4], pointRadius:0 },
+  ]},
+  options: {
+    animation:false, responsive:true, maintainAspectRatio:false,
+    plugins: {
+      legend:{ position:'bottom', labels:{ font:{family:'IBM Plex Mono',size:11}, boxWidth:12 }},
+      tooltip:{ mode:'index', intersect:false }
+    },
+    scales: {
+      x:{ display:false },
+      y:{ min:0, max:1.05, grid:{color:'#f3f4f6'}, ticks:{font:{family:'IBM Plex Mono',size:10}, maxTicksLimit:6} }
+    }
+  }
+});
+
+async function get(url) {
+  const c = new AbortController();
+  const t = setTimeout(()=>c.abort(), 2000);
+  try {
+    const r = await fetch(url, {signal:c.signal});
+    clearTimeout(t);
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  } finally { clearTimeout(t); }
+}
+
+async function toggleRec() {
+  _rec = !_rec;
+  try {
+    await fetch(`${API}/recording?enabled=${_rec}`, {method:'PUT'});
+    const btn = document.getElementById('rec-btn');
+    btn.textContent = _rec ? '⏹ STOP RECORDING' : '⏺ START RECORDING';
+    btn.className   = _rec ? 'active' : '';
+  } catch { _rec = !_rec; }
+}
+
+async function pollStatus() {
+  try {
+    const s = await get(`${API}/status`);
+    document.getElementById('sup-dot').className = 'dot on';
+    document.getElementById('sup-lbl').textContent = 'supervisor online';
+    document.getElementById('pi-dot').className  = 'dot ' + (s.pi_connected ? 'on' : 'off');
+    document.getElementById('pi-lbl').textContent = s.pi_connected ? 'student online' : 'student offline';
+    document.getElementById('m-frames').textContent    = s.total_frames.toLocaleString();
+    document.getElementById('m-harvested').textContent = s.harvest_count.toLocaleString();
+    document.getElementById('m-rate').textContent      = s.harvest_rate_pct + '%';
+    document.getElementById('m-tau').textContent       = s.current_tau.toFixed(3);
+    document.getElementById('m-scenario').textContent  = s.current_scenario || '—';
+    if (s.recording !== _rec) {
+      _rec = s.recording;
+      const btn = document.getElementById('rec-btn');
+      btn.textContent = _rec ? '⏹ STOP RECORDING' : '⏺ START RECORDING';
+      btn.className   = _rec ? 'active' : '';
+    }
+  } catch {
+    document.getElementById('sup-dot').className = 'dot off';
+    document.getElementById('sup-lbl').textContent = 'supervisor offline';
+  }
+  document.getElementById('updated').textContent = new Date().toLocaleTimeString();
+}
+
+async function pollEvents() {
+  try {
+    const ev = await get(`${API}/events?n=200`);
+    if (!ev.length) return;
+    const d = ev.slice().reverse();
+    chart.data.labels           = d.map((_,i)=>i);
+    chart.data.datasets[0].data = d.map(e=>e.delta??null);
+    chart.data.datasets[1].data = d.map(e=>e.entropy??null);
+    chart.data.datasets[2].data = d.map(e=>e.harvested?(e.delta??null):null);
+    chart.data.datasets[3].data = d.map(e=>e.tau??null);
+    chart.update('none');
+  } catch {}
+}
+
+async function pollResults() {
+  try {
+    const rows = await get(`${API}/results`);
+    if (!rows.length) return;
+    document.getElementById('tbl').innerHTML = rows.map(r=>`
+      <tr><td>${r.scenario}</td><td>${r.total_frames}</td><td>${r.harvested_frames}</td>
+          <td>${r.harvest_rate_pct}%</td><td>${r.mean_delta}</td></tr>`).join('');
+  } catch {}
+}
+
+async function applyConfig() {
+  const tau  = document.getElementById('tau').value;
+  const scen = document.getElementById('sel-scenario').value;
+  const sens = document.getElementById('sel-sens').value;
+  const msg  = document.getElementById('apply-msg');
+  try {
+    await Promise.all([
+      fetch(`${API}/config?tau=${tau}&sensitivity=${sens}`, {method:'PUT'}),
+      fetch(`${API}/scenario?name=${scen}`, {method:'PUT'}),
+    ]);
+    msg.textContent = `Applied — tau=${parseFloat(tau).toFixed(2)}, scenario=${scen}`;
+  } catch { msg.textContent = 'Error: supervisor unreachable'; }
+}
+
+function loop() {
+  pollStatus().catch(()=>{});
+  pollEvents().catch(()=>{});
+  if (tick % 4 === 0) pollResults().catch(()=>{});
+  if (tick % 2 === 0) {
+    const t = Date.now();
+    document.getElementById('img-student').src = `${API}/preview/student?t=${t}`;
+    document.getElementById('img-teacher').src = `${API}/preview/teacher?t=${t}`;
+  }
+  tick++;
+}
+
+loop();
+setInterval(loop, 2000);
+</script>
+</body>
+</html>

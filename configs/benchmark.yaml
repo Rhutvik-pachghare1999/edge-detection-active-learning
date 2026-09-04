@@ -1,0 +1,52 @@
+# AECS-SDC offline benchmark configuration
+# This config drives the dataset-driven benchmark entry point (benchmark.py).
+# It uses only the clips and labels that already exist on disk.
+
+benchmark:
+  seed: 42
+  clips_dir: clips
+  labels_dir: clips
+  subset_file: configs/benchmark_subset.txt
+  subset_size: 50
+  trigger_offset_seconds: 5.0
+  frames_per_clip: 1
+  results_dir: results
+  summary_file: results/benchmark_summary.json
+  details_file: results/benchmark_details.json
+  label_map: configs/label_map.yaml
+
+models:
+  student: models/yolov8n.onnx
+  teacher: PekingU/rtdetr_r50vd
+  teacher_device: auto
+  student_conf_threshold: 0.25
+  teacher_conf_threshold: 0.30
+  image_size: [640, 640]
+
+disagreement:
+  # Supported modes: margin | entropy | class_mismatch | combined
+  mode: combined
+  entropy_tau: 0.85
+  # Weights for combined mode (must sum to 1.0)
+  # IoU is the primary spatial disagreement signal; entropy/margin/class_mismatch
+  # provide secondary confidence and label cues.
+  weights:
+    margin: 0.20
+    entropy: 0.20
+    class_mismatch: 0.10
+    iou: 0.50
+
+harvest:
+  # Supported modes: threshold | budget | diversity
+  mode: threshold
+  budget: null
+  target_rate: 0.05
+  min_interval_seconds: 0.0
+  tau_initial: 0.15
+  tau_min: 0.05
+  tau_max: 0.80
+
+logging:
+  level: INFO
+  file: logs/benchmark.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"

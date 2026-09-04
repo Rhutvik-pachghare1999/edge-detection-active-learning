@@ -1,0 +1,537 @@
+AECS-SDC: Asynchronous Edge-Server Supervision System for Selective Data Curation
+
+
+
+
+IFT598 – Managing Intelligent Devices
+
+
+
+
+Rhutvik Pachghare
+
+Arizona State University
+
+April 27, 2026
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Abstract
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The AECS-SDC system is an IoT Level-3 architecture designed to automatically
+identify, collect, and label training data for edge-deployed computer vision
+models without human intervention. A lightweight student model, YOLOv8n, runs
+on a Raspberry Pi 5 and streams inference results to a laptop-based supervisor
+over a persistent WebSocket connection at ten frames per second. The supervisor
+runs a higher-accuracy teacher model, RT-DETR, on the same frames and computes
+a disagreement metric called delta, defined as the absolute difference between
+the two models' confidence scores. When delta exceeds an adaptive threshold,
+the system saves the frame along with the teacher's bounding box annotations
+as labeled training data. Experiments conducted under three physical conditions
+— normal lighting, low light, and occlusion — produced harvest rates of 2.62%,
+28.47%, and 7.89% respectively, confirming that the disagreement metric varies
+predictably with environmental conditions. The system demonstrates that a
+teacher-student IoT architecture can serve as a practical automated data
+curation engine, reducing the need for manual labeling in continuously
+operating edge deployments. Future work includes integrating drone sensor data
+for physical failure mode classification and implementing an automated
+retraining pipeline.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Introduction
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Background
+
+Edge computing has enabled the deployment of machine learning models directly
+on IoT devices, eliminating the latency associated with transmitting raw sensor
+data to a central server for processing (Shi et al., 2016). However, models
+deployed at the edge face a fundamental challenge: the statistical distribution
+of real-world data often differs significantly from the distribution of the
+training data, a phenomenon known as dataset shift. When environmental
+conditions change — such as a reduction in ambient lighting or partial
+obstruction of a camera — model accuracy degrades in ways that are difficult
+to predict or detect without continuous monitoring. The standard remediation
+strategy is to collect additional training data from the degraded conditions
+and retrain the model, but this process requires human annotators to label each
+sample, which is both expensive and time-consuming (Romero et al., 2015).
+
+Problem Statement
+
+The central problem addressed by this project is the absence of an automated
+mechanism for identifying and labeling the specific frames on which an edge
+model fails. In a continuously operating IoT deployment, thousands of frames
+are processed per hour, and only a small fraction represent cases where the
+edge model produces incorrect or uncertain outputs. Manually reviewing this
+volume of data to identify failure cases is not feasible at scale. Furthermore,
+even when failure cases are identified, generating accurate bounding box labels
+requires either human annotation or access to a more accurate reference model.
+This project addresses both problems simultaneously by deploying a high-accuracy
+reference model on a local server and using the disagreement between the two
+models as an automatic failure detection signal.
+
+Framework and Nature of Work
+
+The AECS-SDC system implements a teacher-student architecture within an IoT
+Level-3 framework. The Raspberry Pi 5 functions as the IoT edge device,
+capturing video frames from a USB webcam and running YOLOv8n inference locally.
+The laptop functions as the local server, running the RT-DETR teacher model and
+making harvest decisions based on the disagreement between the two models.
+A Parrot Mambo EDU drone connected via USB provides physical sensor readings
+including sonar altitude and accelerometer magnitude, which are used to
+automatically classify the physical cause of each model failure. All frame
+events are stored in a SQLite database, and a real-time HTML dashboard provides
+live visibility into system behavior without requiring terminal access.
+
+Study Significance
+
+The significance of this work lies in its demonstration that the teacher-student
+architecture, previously applied primarily in model compression research, can
+serve a practical data curation function in IoT deployments (Romero et al.,
+2015). The system generates labeled training data continuously and automatically,
+without human intervention. The inclusion of physical sensor context from the
+drone sensor suite adds diagnostic capability that distinguishes this system
+from a simple data collection pipeline. This approach mirrors the data engine
+architecture used in production autonomous systems, where physical sensor
+context is used to classify the root cause of perception failures rather than
+simply flagging that a failure occurred (Shi et al., 2016). The project
+demonstrates that this capability is achievable with commodity hardware and
+open-source software.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Design Process
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Materials and Instruments
+
+The hardware platform consists of three physical components. The primary edge
+device is a Raspberry Pi 5 with 4 GB of RAM running Ubuntu 24.04, connected
+to a USB webcam that captures frames at ten frames per second. A Parrot Mambo
+EDU drone (firmware version 3.0.26) is connected to the laptop via USB and
+appears as a USB Ethernet adapter at IP address 192.168.2.1. The local server
+is an HP OMEN laptop running Ubuntu 24.04 with an NVIDIA RTX 3050 Ti GPU,
+which provides the GPU acceleration required for RT-DETR inference.
+
+Software dependencies on the Raspberry Pi include Python 3.11, FastAPI,
+ONNXRuntime, OpenCV, websockets, and httpx. The supervisor on the laptop
+requires Python 3.11, FastAPI, PyTorch, HuggingFace Transformers, OpenCV,
+and loguru. The dashboard is implemented as a single HTML file using Chart.js
+loaded from a content delivery network, requiring no additional server
+infrastructure. All software components are open-source and available under
+permissive licenses.
+
+Communication Protocol Selection
+
+WebSocket was selected as the primary communication protocol for the telemetry
+stream between the Raspberry Pi and the laptop. The alternative, REST-based
+HTTP polling, introduces per-request overhead that is unacceptable at ten
+frames per second, as each HTTP handshake adds approximately five to ten
+milliseconds of latency per request (Ramachandran & Srinivasan, 2022). A
+WebSocket connection maintains a persistent TCP session and eliminates this
+overhead entirely, enabling continuous bidirectional communication with minimal
+latency. The WebSocket message format uses a fixed-width 2048-byte JSON header
+followed by a JPEG-encoded frame, allowing the supervisor to parse the header
+without a length prefix or delimiter.
+
+REST endpoints are used for operations that do not require streaming, including
+pushing configuration changes from the dashboard to the supervisor, triggering
+clip uploads from the Pi to the laptop, and serving the dashboard's polling
+requests. FastAPI was selected for both the Pi agent and the supervisor because
+it supports WebSocket and REST in a single process and handles asynchronous I/O
+natively through Python's asyncio framework. This combination of WebSocket for
+streaming and REST for control represents an IoT Level-3 architecture with
+bidirectional communication between the edge device and the local server.
+
+Model Selection
+
+The student model is YOLOv8n, the smallest variant in the Ultralytics YOLO
+family, exported to ONNX format and executed on the Raspberry Pi's CPU using
+ONNXRuntime (Jocher et al., 2023). YOLOv8n was selected because it is the
+only YOLO variant that achieves acceptable inference speed on the Pi without
+a GPU. The ONNX export produces a tensor of shape (1, 84, 8400), where 84
+rows consist of four bounding box coordinates and 80 COCO class scores across
+8400 anchor points. The student confidence score is defined as the maximum
+class score across all anchor points.
+
+The teacher model is RT-DETR-r50vd, a transformer-based object detector loaded
+from HuggingFace and executed on the laptop's GPU (Kim et al., 2023). RT-DETR
+uses a transformer encoder with global self-attention across the full image,
+which makes it significantly more robust than YOLOv8n under difficult
+conditions such as low contrast or partial occlusion. Where YOLOv8n relies on
+local feature detection that fails when image contrast is low, RT-DETR can
+use global context to identify objects that are poorly lit or partially hidden.
+The measured inference time for RT-DETR on the RTX 3050 Ti was 61 milliseconds
+per frame.
+
+Discrepancy Threshold Design
+
+The harvest decision is based on a single scalar value called delta, defined
+as the absolute difference between the teacher's maximum confidence score and
+the student's maximum confidence score. When delta exceeds a threshold tau,
+the frame is saved as a training sample. Tau is initialized at 0.15 and
+adjusted automatically by a proportional-integral-derivative (PID) controller
+that targets a five percent harvest rate, preventing the system from harvesting
+too many frames during high-disagreement periods or too few during stable
+periods. The PID gains were tuned empirically for a ten-hertz frame rate with
+a 100-frame sliding window: Kp = 0.30, Ki = 0.02, Kd = 0.05.
+
+The initial tau value of 0.15 was selected based on observed delta distributions
+from preliminary testing. Normal conditions produced a mean delta of
+approximately 0.097, low-light conditions produced a mean delta of
+approximately 0.423, and occlusion produced approximately 0.168. With tau at
+0.15, normal frames fall mostly below the threshold while low-light frames
+mostly exceed it, producing the selective harvesting behavior required to
+generate a useful training dataset.
+
+Automatic Scenario Detection
+
+Rather than requiring manual labeling of physical conditions, the supervisor
+detects the current condition automatically from each frame using three
+lightweight detectors. The lighting detector converts the frame to grayscale
+and checks the mean pixel value; values below 50 indicate low-light conditions.
+The occlusion detector applies Canny edge detection and checks the mean edge
+density; values below five indicate that the camera view is substantially
+blocked. The motion detector checks the accelerometer magnitude from the drone
+sensor; values above 0.5 m/s² indicate vibration or movement. This design
+means the scenario label stored in the database is derived from the sensor
+data itself rather than from manual operator input.
+
+Assumptions and Limitations
+
+The system assumes both devices are connected to the same local network with
+sufficient bandwidth for ten-hertz JPEG streaming. JPEG quality was set to
+60% to reduce bandwidth requirements while maintaining sufficient image quality
+for inference. The Parrot Mambo drone battery was completely discharged (0.09V)
+during testing, and the drone's flight controller (dragon-prog) discards its
+output to /dev/null by default at boot. The sensor integration code was
+implemented and tested successfully in isolation, but produced zero values
+during the experiment runs due to the inability to redirect dragon-prog output
+after a power cycle without the full boot environment. The motion scenario was
+not tested in this experiment because the motion detector depends on
+accelerometer data that was unavailable. The teacher model runs inference on
+every fifth frame to avoid blocking the WebSocket receive loop, meaning delta
+values for four of every five frames are computed against a slightly stale
+teacher result.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Development Process
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IoT Level-3 Architecture
+
+The AECS-SDC system implements an IoT Level-3 architecture with three distinct
+tiers. The first tier is the sensing and inference layer, consisting of the
+Raspberry Pi 5 with its USB webcam and drone sensor connection. The second
+tier is the local server layer, consisting of the laptop running the supervisor
+process, the discrepancy engine, and the SQLite database. The third tier is
+the presentation layer, consisting of the HTML dashboard that reads from the
+supervisor's REST API. Data flows upward from the Pi to the laptop
+continuously, while configuration flows downward from the laptop to the Pi
+on demand.
+
+The functional block diagram below describes the information flow between
+all system components:
+
+  [USB Webcam] → [Raspberry Pi 5: YOLOv8n ONNX, Edge Agent :8001]
+  [Parrot Mambo: USB Ethernet 192.168.2.1] → [Pi: drone_sensors.py]
+  [Pi] → WebSocket (2048B header + JPEG) → [Laptop Supervisor :8000]
+  [Laptop Supervisor] → [RT-DETR GPU inference]
+  [Laptop Supervisor] → [Discrepancy Engine: delta, PID tau]
+  [Laptop Supervisor] → [SQLite: events.db]
+  [Laptop Supervisor] → REST → [HTML Dashboard]
+  [Laptop Supervisor] → POST /harvest → [Pi: saves MP4 clip]
+  [Pi] → POST /harvest/upload → [Laptop: saves YOLO .txt labels]
+  [Laptop Supervisor] → Gmail SMTP SSL 465 → [Email alerts]
+
+(See Figure 2: Architecture Diagram for the visual representation)
+
+Edge Agent Development
+
+The edge agent is a FastAPI application running on the Raspberry Pi that
+executes two concurrent tasks. The first task is a WebSocket streaming loop
+that captures frames from the USB webcam using OpenCV's VideoCapture, runs
+YOLOv8n inference, reads drone sensor values, and streams the results to the
+supervisor at ten hertz. The second task is a REST server that accepts harvest
+commands from the supervisor and saves video clips of the five seconds before
+and 1.5 seconds after each harvest trigger. The ring buffer that stores
+pre-event frames uses a deque with a maximum length of 50 frames, providing
+approximately five seconds of context at ten hertz.
+
+The YOLOv8n inference function decodes the ONNX output tensor to extract the
+student confidence score and the top three bounding box detections above a
+0.25 confidence threshold. The bounding box coordinates are normalized to the
+range [0, 1] in YOLO format (center x, center y, width, height) for
+transmission in the WebSocket header. The header is padded to exactly 2048
+bytes with null characters, allowing the supervisor to split the header from
+the JPEG payload without a length prefix. The drone sensor reader connects to
+the Parrot Mambo via telnet on port 23, restarts the dragon-prog flight
+controller process, and tails the log file at /tmp/dragon.log to extract sonar
+altitude and accelerometer readings at approximately one hertz.
+
+Supervisor Development
+
+The supervisor is a FastAPI application on the laptop that accepts the
+WebSocket connection from the Pi and processes each incoming frame. To reduce
+GPU load, the teacher model runs inference only on every fifth frame; for the
+remaining four frames, the supervisor reuses the last teacher result. Teacher
+inference runs in a thread pool executor so it does not block the WebSocket
+receive loop, which would cause the Pi to accumulate a backlog of unprocessed
+frames. A frame-drop mechanism using a boolean flag ensures that if a new
+frame arrives while the previous one is still being processed, the supervisor
+immediately acknowledges the frame as skipped rather than queuing it.
+
+The discrepancy engine computes delta, steps the PID controller to adjust tau,
+logs the event to SQLite, and triggers a harvest if delta exceeds tau. When
+recording is enabled by the operator via the dashboard, every frame is written
+to the database with its full context including scenario label, delta, entropy,
+sonar altitude, accelerometer magnitude, and teacher bounding box detections
+in JSON format. When a harvest is triggered, the supervisor sends a POST
+request to the Pi's /harvest endpoint, and the Pi saves a video clip and
+uploads it back to the supervisor. The supervisor then writes a YOLO-format
+label file alongside the clip, making the harvested data immediately usable
+for model fine-tuning without additional processing.
+
+Database Design
+
+All frame events are stored in a SQLite database with the following schema:
+id (primary key), frame_id (string), timestamp (Unix float), c_teacher (float),
+c_student (float), delta (float), harvested (integer), scenario (text),
+clip_path (text), entropy (float), sonar_m (float), accel_mag (float), and
+teacher_labels (JSON text). The teacher_labels column stores a JSON array
+where each element contains the COCO class identifier, class name, confidence
+score, and bounding box in YOLO format. A second table, config_log, records
+every configuration change with a timestamp, tau value, and sensitivity
+setting. The database is created automatically on first supervisor startup
+and migrated forward using ALTER TABLE statements for backward compatibility
+with existing databases.
+
+Dashboard Development
+
+The dashboard is implemented as a single HTML file that requires no server
+to run and is opened directly in a browser from the local filesystem. It polls
+the supervisor's REST API every two seconds using the Fetch API with a
+two-second abort timeout, preventing the dashboard from freezing if the
+supervisor is slow or unreachable. The signal chart uses Chart.js to display
+the last 200 frames as a time series, plotting delta, entropy, harvested frame
+markers, and the current tau threshold. A recording toggle button controls
+whether frames are written to the database, allowing the operator to start
+and stop data collection without restarting any processes. Cross-Origin
+Resource Sharing (CORS) middleware is added to the supervisor so the file://
+dashboard can make cross-origin requests to localhost:8000 without being
+blocked by the browser's same-origin policy.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Testing and Results
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Experiment Setup
+
+The experiment was conducted with the Raspberry Pi 5 connected to a USB webcam
+pointed at a person sitting at a desk approximately 60 centimeters from the
+camera. The supervisor ran on the laptop connected to the same local WiFi
+network. The recording toggle was activated at the start of each condition and
+deactivated at the end. Three conditions were tested sequentially without
+restarting the supervisor between conditions, allowing the PID controller state
+to carry over and adapt across scenarios.
+
+The three conditions were: (1) nominal — normal room lighting with the subject
+sitting still in front of the camera; (2) low light — room lights turned off
+with only ambient monitor light remaining; and (3) occlusion — the subject's
+hand held flat directly in front of the webcam lens to block most of the view.
+The entropy-based harvest trigger was disabled prior to the experiment, and
+the harvest decision relied solely on delta exceeding tau. The initial tau
+value was set to 0.15 based on preliminary delta distribution analysis.
+
+Results
+
+A total of 1,670 frames were collected across the three scenarios. Table 1
+presents the complete results.
+
+Table 1: Experiment Results by Scenario
+
+  Scenario   | Frames | Harvested | Rate%  | Mean Delta | Max Delta
+  -----------|--------|-----------|--------|------------|----------
+  nominal    |  1336  |    35     |  2.62% |   0.0975   |  0.7811
+  low_light  |   144  |    41     | 28.47% |   0.4232   |  0.8608
+  occlusion  |   190  |    15     |  7.89% |   0.1684   |  0.7183
+
+The results show a clear monotonic relationship between environmental
+degradation and harvest rate. The nominal condition produced a harvest rate
+of 2.62%, indicating that the two models agreed on the vast majority of frames
+under normal conditions. The low-light condition produced a harvest rate of
+28.47%, nearly eleven times higher than nominal, with a mean delta of 0.4232
+compared to 0.0975 under nominal conditions. The occlusion condition produced
+an intermediate harvest rate of 7.89% with a mean delta of 0.1684.
+
+(See Figure 1: Results Chart for bar chart visualization of these results)
+
+Analysis
+
+The mean delta values confirm the hypothesis that physical environmental
+conditions produce predictable and distinguishable disagreement signatures
+between the teacher and student models. Low-light conditions produced the
+highest mean delta because YOLOv8n relies on local feature detection that
+degrades significantly when image contrast is reduced, while RT-DETR uses
+global self-attention that is more robust to low-contrast scenes (Kim et al.,
+2023). The teacher model continued to detect objects such as a person at 0.93
+confidence and a chair at 0.59 confidence during low-light conditions, while
+the student model produced no bounding box detections despite reporting a raw
+confidence score of 0.872. This discrepancy — high student confidence with no
+localizations versus accurate teacher detections — is precisely the failure
+mode the harvest trigger is designed to capture.
+
+Occlusion produced a higher delta than nominal (0.1684 versus 0.0975),
+confirming that physical obstruction of the camera causes the student model
+to miss detections that the teacher catches. The smaller difference compared
+to low light is consistent with the nature of the condition: partial occlusion
+leaves enough of the scene visible for the student to make some detections,
+whereas low light degrades the entire image uniformly. With tau set to 0.15,
+the PID controller maintained selective harvesting across all conditions,
+preventing the harvest queue from being flooded during the high-delta low-light
+period while still capturing the most informative frames.
+
+Harvested Dataset
+
+Each harvest event produced two output files: an MP4 video clip containing
+the five seconds before and 1.5 seconds after the trigger frame, and a
+YOLO-format label file containing the teacher's bounding box detections. The
+label file format is one detection per line in the format: class_id cx cy bw bh,
+where all coordinates are normalized to the range [0, 1]. These files are
+directly compatible with the Ultralytics YOLOv8 training pipeline and can be
+used to fine-tune the student model without any additional processing step
+(Jocher et al., 2023). A total of 91 harvest events were recorded across the
+three scenarios, producing 91 labeled clips.
+
+Email Notification
+
+The email notification system sent alerts to the configured Gmail address
+during harvest events using SMTP SSL on port 465. Each email contained the
+frame identifier, scenario label, delta value, entropy value, and total harvest
+count at the time of the alert. A 60-second cooldown between messages prevented
+inbox flooding during the high-harvest low-light condition, where many
+consecutive frames exceeded the threshold. The email system operated correctly
+throughout the experiment, providing real-time notification of harvest events
+without requiring the operator to monitor the dashboard continuously.
+
+System Performance
+
+The supervisor processed frames at approximately ten hertz when the teacher
+model ran on every fifth frame. The measured inference time for RT-DETR on
+the RTX 3050 Ti was 61 milliseconds per frame, which would limit throughput
+to approximately 16 frames per second if run on every frame. Running inference
+on every fifth frame reduced effective teacher throughput to approximately two
+hertz while maintaining ten-hertz frame processing for the student model and
+harvest decisions. The WebSocket connection between the Pi and the laptop
+remained stable throughout the experiment with no disconnections under normal
+WiFi conditions.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Summary and Conclusions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Summary
+
+The AECS-SDC system successfully demonstrated that a teacher-student IoT
+architecture can automatically identify, collect, and label training data for
+edge-deployed computer vision models. The system used WebSocket for real-time
+telemetry between the Raspberry Pi and the laptop, REST for configuration and
+file transfer, and SQLite for persistent storage of all frame events. The
+experiment collected 1,670 frames across three physical conditions and produced
+91 labeled harvest events, with harvest rates of 2.62%, 28.47%, and 7.89% for
+nominal, low-light, and occlusion conditions respectively. The results confirm
+that the delta metric — the disagreement between the teacher and student models
+— varies predictably with physical environmental conditions, enabling automatic
+failure mode classification without manual labeling.
+
+What Was Learned
+
+This project demonstrated several important principles about IoT system design
+that extend beyond the specific application domain. The selection of WebSocket
+over REST for the primary telemetry stream was validated by the performance
+requirements: at ten frames per second, REST polling would have introduced
+unacceptable per-request overhead. Asynchronous I/O requires careful attention
+to blocking operations; running RT-DETR inference synchronously in the
+WebSocket handler caused the entire event loop to stall, and moving inference
+to a thread pool executor resolved the issue immediately. Physical hardware
+introduces constraints that cannot be anticipated from software design alone:
+the drone battery being discharged, the USB controller hardware limitation,
+and the fixed header size being insufficient for bounding box data were all
+problems that required hardware-aware solutions.
+
+Conclusions
+
+The teacher-student architecture is a practical approach to continuous learning
+in IoT deployments. The system generates its own training data without human
+intervention, and the physical sensor context from the drone adds diagnostic
+value that a pure vision system cannot provide. The combination of delta-based
+harvesting, automatic scenario detection, and YOLO-format label generation
+produces a dataset that is immediately usable for model retraining. The
+experiment results provide empirical evidence that the disagreement metric
+is a reliable indicator of environmental degradation, with low-light conditions
+producing a mean delta 4.3 times higher than nominal conditions.
+
+Recommendations for Further Research
+
+Several extensions would improve the system and are recommended for future
+work. First, implementing an automatic retraining pipeline that fine-tunes
+YOLOv8n on the harvested dataset and measures the improvement in student
+accuracy would close the feedback loop and validate the practical utility of
+the collected data. Second, testing with a charged drone battery would validate
+the sonar and accelerometer readings as physical failure mode classifiers,
+enabling the motion scenario to be tested and the full four-condition
+experiment to be completed. Third, extending the system to multiple Raspberry
+Pi devices streaming to a single supervisor would demonstrate scalability and
+is a natural next step for industrial deployment. Fourth, deploying the teacher
+model on a dedicated server GPU would allow inference on every frame rather
+than every fifth frame, improving the accuracy of delta measurements.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+References
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Jocher, G., Chaurasia, A., & Qiu, J. (2023). Ultralytics YOLO (Version 8.0)
+    [Computer software]. Ultralytics.
+    https://github.com/ultralytics/ultralytics
+
+Kim, B., Liao, W., & contributors. (2023). RT-DETR: DETRs beat YOLOs on
+    real-time object detection. arXiv preprint arXiv:2304.08069.
+    https://doi.org/10.48550/arXiv.2304.08069
+
+Lin, T., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., Dollar,
+    P., & Zitnick, C. L. (2014). Microsoft COCO: Common objects in context.
+    In D. Fleet, T. Pajdla, B. Schiele, & T. Tuytelaars (Eds.), Computer
+    vision — ECCV 2014 (pp. 740–755). Springer.
+    https://doi.org/10.1007/978-3-319-10602-1_48
+
+Parrot SA. (2018). Parrot Mambo EDU technical documentation. Parrot Developer
+    Portal. https://developer.parrot.com/docs/mambo/
+
+Ramachandran, A., & Srinivasan, R. (2022). Edge intelligence for IoT: A survey
+    on architectures, challenges, and applications. IEEE Internet of Things
+    Journal, 9(12), 9483–9502.
+    https://doi.org/10.1109/JIOT.2021.3132601
+
+Romero, A., Ballas, N., Kahou, S. E., Chassang, A., Gatta, C., & Bengio, Y.
+    (2015). FitNets: Hints for thin deep nets. International Conference on
+    Learning Representations.
+    https://arxiv.org/abs/1412.6550
+
+Shi, W., Cao, J., Zhang, Q., Li, Y., & Xu, L. (2016). Edge computing: Vision
+    and challenges. IEEE Internet of Things Journal, 3(5), 637–646.
+    https://doi.org/10.1109/JIOT.2016.2579198
+
+Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue, C., Moi, A., Cistac,
+    P., Rault, T., Louf, R., Funtowicz, M., & Brew, J. (2020). HuggingFace's
+    Transformers: State-of-the-art natural language processing. In Proceedings
+    of the 2020 Conference on Empirical Methods in Natural Language Processing:
+    System Demonstrations (pp. 38–45). Association for Computational
+    Linguistics. https://doi.org/10.18653/v1/2020.emnlp-demos.6

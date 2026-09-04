@@ -35,6 +35,12 @@ submission/
 submission.zip
 architecture_diagram.png
 results_chart.png
+prompt.txt
+
+# Legacy supervisor hardware path contains video/logs (code is tracked separately)
+supervisor/clips/
+supervisor/logs/
+supervisor/__pycache__/
 
 # Retraining experiments and temporary YOLO datasets
 experiments/retrain/

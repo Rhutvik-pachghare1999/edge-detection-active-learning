@@ -1,0 +1,18 @@
+# Label to model class mapping for AECS-SDC evaluation.
+#
+# The local YOLO-format label files use integer class IDs. The student model
+# (models/yolov8n.onnx) outputs scores for the 80 COCO classes in the standard
+# COCO order. For the current dataset, every label class ID is already a valid
+# COCO ID in [0, 79], so the mapping is the identity. If a future dataset uses
+# a different taxonomy, add explicit entries here.
+
+name: "coco_identity"
+source: "dataset_label_id"
+target: "coco_80"
+
+# Explicit remappings. Empty means identity mapping.
+mapping: {}
+
+# IDs outside this range and not present in `mapping` are treated as unknown.
+valid_range: [0, 79]
+unknown_id: -1
