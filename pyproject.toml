@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aecs-sdc"
+version = "0.2.0"
+description = "Offline benchmark for AECS-SDC teacher-student active learning on human-labeled COCO."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "AECS-SDC Team"}
+]
+# NOTE: PyTorch CUDA wheels are pinned to cu130.  When installing from PyPI
+# without the PyTorch index, pip will resolve to the CPU wheel.  For GPU installs
+# use the index URLs in requirements.txt, or run:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+dependencies = [
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "ultralytics==8.4.41",
+    "transformers==5.6.2",
+    "accelerate==1.13.0",
+    "onnxruntime==1.25.0",
+    "onnxruntime-gpu==1.25.0",
+    "onnx==1.21.0",
+    "pycocotools==2.0.8",
+    "opencv-python==4.13.0.92",
+    "Pillow==12.2.0",
+    "numpy==2.4.4",
+    "PyYAML==6.0.3",
+    "requests==2.33.1",
+    "httpx==0.28.1",
+    "fastapi[standard]==0.136.1",
+    "uvicorn[standard]==0.46.0",
+    "websockets==16.0",
+    "python-multipart==0.0.26",
+    "aiofiles==25.1.0",
+    "streamlit==1.56.0",
+    "plotly==6.7.0",
+    "pandas==3.0.2",
+    "sqlalchemy==2.0.49",
+    "aiosqlite==0.22.1",
+    "loguru==0.7.3",
+    "python-dotenv==1.2.2",
+    "matplotlib==3.10.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
