@@ -1,0 +1,39 @@
+# Tier-1 full budget-sweep experiment configuration.
+# Only executed automatically if the reduced pass (configs/tier1_reduced.yaml)
+# shows HARVESTED beating RANDOM beyond noise at K=250.
+#
+# Protocol:
+#   * TRAIN_POOL (1,200 images) is unlabeled to the student.
+#   * RT-DETR pseudo-labels TRAIN_POOL for selection/training only.
+#   * Three training-set sizes: K = 100, 250, 500.
+#   * Three arms: HARVESTED (top disagreement), RANDOM, ENTROPY (top student
+#     prediction entropy).
+#   * Each arm/K is fine-tuned with 3 seeds and evaluated on the held-out human
+#     COCO TEST split (300 images).
+#   * Results are plotted as mAP50 vs K with error bars.
+
+experiment:
+  name: tier1_full
+  seeds: [42, 43, 44]
+  k_values: [100, 250, 500]
+  arms: [harvested, random, entropy]
+  epochs: 15
+  imgsz: 640
+  batch: 16
+  device: auto
+  continue_to_full: false
+  yolo_base: yolov8n.pt
+  student_onnx: models/yolov8n.onnx
+
+teacher:
+  model: PekingU/rtdetr_r50vd
+  conf_threshold: 0.30
+
+student:
+  conf_threshold: 0.25
+  image_size: [640, 640]
+
+logging:
+  level: INFO
+  file: tier1_full.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"

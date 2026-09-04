@@ -1,0 +1,40 @@
+# Tier-1 reduced first-pass experiment configuration.
+# Runs on a single A100 GPU node in < 1 hour.
+#
+# Protocol:
+#   * TRAIN_POOL (1,200 images) is unlabeled to the student.
+#   * RT-DETR pseudo-labels TRAIN_POOL for selection/training only.
+#   * YOLOv8n student runs on TRAIN_POOL to supply disagreement/entropy signals.
+#   * Two arms of size K=250 are compared: HARVESTED (top disagreement) and RANDOM.
+#   * Each arm is fine-tuned with 3 seeds and evaluated on the held-out human
+#     COCO TEST split (300 images).
+#   * If HARVESTED beats RANDOM by more than combined std at K=250, the job
+#     continues to configs/tier1_full.yaml automatically.
+
+experiment:
+  name: tier1_reduced
+  seeds: [42, 43, 44]
+  k_values: [250]
+  arms: [harvested, random]
+  epochs: 10
+  imgsz: 640
+  batch: 16
+  device: auto
+  continue_to_full: true
+  check_separation_at_k: 250
+  full_config: configs/tier1_full.yaml
+  yolo_base: yolov8n.pt
+  student_onnx: models/yolov8n.onnx
+
+teacher:
+  model: PekingU/rtdetr_r50vd
+  conf_threshold: 0.30
+
+student:
+  conf_threshold: 0.25
+  image_size: [640, 640]
+
+logging:
+  level: INFO
+  file: tier1.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"
