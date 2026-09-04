@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.log
+
+# Virtual environments
+venv/
+.venv/
+
+# Secrets (never commit)
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated benchmark outputs (do not commit)
+results/
+logs/
+
+# Local data assets and large archives (large; not versioned)
+clips/
+data/
+archive/
+submission/
+submission.zip
+architecture_diagram.png
+results_chart.png
+
+# Retraining experiments and temporary YOLO datasets
+experiments/retrain/
+runs/
+random_subset_*/
+harvested_subset_*/
+entropy_subset_*/
+
+# Ultralytics training artifacts
+*.pt
+/yolov8n.pt
+
+# Tier-1 experiment outputs (generated; keep directories with .gitkeep)
+experiments/tier1/
+results/tier1/
+
+# SOL cluster scripts and scratch-specific configs (untracked per project rules)
+sol/
+
+# COCO data downloads (large; staged separately)
+data/coco2017/
