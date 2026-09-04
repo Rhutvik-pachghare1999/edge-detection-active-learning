@@ -51,6 +51,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from aecs_sdc.acquisition import check_separation, select_subset, select_top_k
+from aecs_sdc.coco_label_map import NUM_COCO_CLASSES, remap_class_id
 from aecs_sdc.logging_config import configure_logging
 from aecs_sdc.student import StudentModel
 from aecs_sdc.teacher import TeacherModel
@@ -74,6 +75,30 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def remap_teacher_detections(result: dict) -> dict:
+    """Convert COCO category IDs from RT-DETR into YOLO 0..79 indices.
+
+    RT-DETR may emit either original COCO category IDs (e.g., person=1) or
+    contiguous YOLO-style indices. ``remap_class_id`` handles both cases
+    idempotently, so the returned dict uses the same class space as the
+    YOLOv8 student and the prepared dataset labels.
+    """
+    mapped = dict(result)
+    mapped["top_class_id"] = remap_class_id(result.get("top_class_id", -1))
+    mapped["top_class_name"] = (
+        COCO_NAMES[mapped["top_class_id"]]
+        if 0 <= mapped["top_class_id"] < NUM_COCO_CLASSES
+        else "unknown"
+    )
+    mapped_detections = []
+    for det in result.get("detections", []):
+        md = dict(det)
+        md["label"] = remap_class_id(det.get("label", -1))
+        mapped_detections.append(md)
+    mapped["detections"] = mapped_detections
+    return mapped
 
 
 def load_config(config_path: Path) -> dict:
@@ -119,7 +144,7 @@ def ensure_teacher_cache(
         info = lookup[im_id]
         img_path = subset_root / "images" / "train" / info["file_name"]
         frame = np.array(Image.open(img_path).convert("RGB"))[:, :, ::-1]  # RGB -> BGR
-        results[im_id] = teacher.infer(frame)
+        results[im_id] = remap_teacher_detections(teacher.infer(frame))
         if idx % 50 == 0:
             logger.info(f"Teacher labeled {idx}/{len(train_ids)} train images")
 
