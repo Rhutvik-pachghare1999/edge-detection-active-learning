@@ -14,9 +14,19 @@ def test_committed_subset_exists_and_is_non_empty():
 
 
 def test_build_subset_matches_committed():
-    """If the committed subset is regenerated deterministically it must match."""
+    """If the committed subset is regenerated deterministically it must match.
+
+    Depends on the raw `clips/` data, which is not committed to the public repo
+    (large legacy-prototype media). Skips when the clips are absent — e.g. in CI
+    on a fresh clone — so it validates determinism locally without failing CI.
+    """
+    import pytest
     root = Path(__file__).resolve().parent.parent
-    built = build_subset(str(root / "clips"), str(root / "clips"), 50, 42)
+    clips_dir = root / "clips"
+    clip_files = list(clips_dir.glob("*.mp4")) if clips_dir.is_dir() else []
+    if not clip_files:
+        pytest.skip("clips/ data not present (not committed to public repo)")
+    built = build_subset(str(clips_dir), str(clips_dir), 50, 42)
     committed = load_subset(root / "configs" / "benchmark_subset.txt")
     assert built == committed
 
