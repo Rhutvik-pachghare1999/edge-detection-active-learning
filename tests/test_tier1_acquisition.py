@@ -1,9 +1,13 @@
 """Tests for acquisition / active-learning subset selection."""
 
+import numpy as np
+import pytest
+
 from aecs_sdc.acquisition import (
     check_separation,
     disagreement_score,
     entropy_score,
+    hybrid_selection,
     select_random_k,
     select_subset,
     select_top_k,
@@ -172,3 +176,77 @@ def test_entropy_score_matches_top_confidence():
     low_conf = _student_result([_det(0, score=0.55)], top_confidence=0.55, entropy=0.5)
     high_conf = _student_result([_det(0, score=0.95)], top_confidence=0.95, entropy=0.1)
     assert entropy_score(low_conf) > entropy_score(high_conf)
+
+
+def test_hybrid_selection_spreads_over_clusters():
+    """When three identical high-uncertainty clones exist, hybrid must spread."""
+    frame_ids = ["a", "b", "c", "d"]
+    # a, b, c are identical high-uncertainty points; d is far away and lower uncertainty.
+    embeddings = {
+        "a": np.array([1.0, 0.0]),
+        "b": np.array([1.0, 0.0]),
+        "c": np.array([1.0, 0.0]),
+        "d": np.array([0.0, 1.0]),
+    }
+    uncertainty = {"a": 0.9, "b": 0.9, "c": 0.9, "d": 0.4}
+    selected = hybrid_selection(frame_ids, uncertainty, embeddings, k=2, diversity_weight=0.5)
+    # First pick is the highest-uncertainty clone (a, then by tie-break id).
+    assert selected[0] == "a"
+    # Second pick must be the distant point d, not another clone.
+    assert selected[1] == "d"
+
+
+def test_hybrid_selection_returns_all_when_k_too_large():
+    frame_ids = ["x", "y"]
+    embeddings = {"x": np.array([1.0, 0.0]), "y": np.array([0.0, 1.0])}
+    uncertainty = {"x": 0.2, "y": 0.8}
+    selected = hybrid_selection(frame_ids, uncertainty, embeddings, k=10)
+    assert len(selected) == 2
+    assert set(selected) == {"x", "y"}
+
+
+def test_hybrid_selection_rejects_missing_embeddings():
+    frame_ids = ["a", "b"]
+    uncertainty = {"a": 0.5, "b": 0.5}
+    embeddings = {"a": np.array([1.0, 0.0])}
+    with pytest.raises(KeyError):
+        hybrid_selection(frame_ids, uncertainty, embeddings, k=2)
+
+
+def test_select_subset_hybrid_requires_embeddings():
+    train_ids = ["1", "2", "3"]
+    teacher = {im: _teacher_result([]) for im in train_ids}
+    student = {im: _student_result([], entropy=0.5) for im in train_ids}
+    with pytest.raises(ValueError, match="hybrid mode requires embeddings"):
+        select_subset(
+            mode="hybrid",
+            train_ids=train_ids,
+            teacher_results=teacher,
+            student_results=student,
+            k=2,
+            seed=0,
+        )
+
+
+def test_select_subset_hybrid_with_embeddings_runs():
+    train_ids = ["1", "2", "3"]
+    teacher = {im: _teacher_result([]) for im in train_ids}
+    student = {im: _student_result([], entropy=0.5) for im in train_ids}
+    embeddings = {
+        "1": np.array([1.0, 0.0]),
+        "2": np.array([0.0, 1.0]),
+        "3": np.array([0.0, 0.0]),
+    }
+    selected = select_subset(
+        mode="hybrid",
+        train_ids=train_ids,
+        teacher_results=teacher,
+        student_results=student,
+        k=2,
+        seed=0,
+        embeddings=embeddings,
+        hybrid_uncertainty_mode="entropy",
+        diversity_weight=0.5,
+    )
+    assert len(selected) == 2
+    assert set(selected).issubset(set(train_ids))

@@ -74,7 +74,8 @@ def prepare_yolo_dataset(
     test_ids: List[str],
     train_pseudo_labels: Dict[str, List[dict]],
     manifest: dict,
-    subset_name: str = "tier1",
+    subset_name: str = "subset",
+    run_name: str = "tier1",
 ) -> Path:
     """Create a temporary YOLO dataset for one arm/seed/K run.
 
@@ -83,7 +84,7 @@ def prepare_yolo_dataset(
 
     Returns the path to the generated ``data.yaml``.
     """
-    ds_root = output_dir / f"yolo_{subset_name}"
+    ds_root = output_dir / f"yolo_{run_name}"
     if ds_root.exists():
         shutil.rmtree(ds_root)
     (ds_root / "images" / "train").mkdir(parents=True)
@@ -92,7 +93,7 @@ def prepare_yolo_dataset(
     (ds_root / "labels" / "val").mkdir(parents=True)
 
     lookup = manifest_id_to_info(manifest)
-    subset_root = data_root / "subset"
+    subset_root = data_root / subset_name
 
     def _copy_split(ids: List[str], split: str, labels_source: Optional[Dict[str, List[dict]]] = None):
         for im_id in ids:

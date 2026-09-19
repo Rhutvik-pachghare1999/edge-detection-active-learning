@@ -5,7 +5,7 @@ used for selection.
 """
 
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -94,19 +94,133 @@ def select_subset(
     student_results: Dict[str, dict],
     k: int,
     seed: int,
+    embeddings: Optional[Dict[str, np.ndarray]] = None,
+    hybrid_uncertainty_mode: str = "disagreement",
+    diversity_weight: float = 0.5,
 ) -> List[str]:
     """Select a training subset of size ``k`` using ``mode``.
 
-    For ``random`` the seed controls sampling; for ``disagreement`` and
-    ``entropy`` the seed has no effect because selection is deterministic given
-    the teacher/student outputs.
+    Modes:
+        * ``random``        -- uniform seed-controlled sampling
+        * ``disagreement``  -- top-K teacher-student disagreement
+        * ``entropy``       -- top-K student entropy
+        * ``hybrid``        -- normalized disagreement/entropy + k-center-greedy
+                               diversity on image embeddings
     """
     if mode == "random":
         return select_random_k(train_ids, k, seed)
+    if mode == "hybrid":
+        if embeddings is None:
+            raise ValueError("hybrid mode requires embeddings")
+        uncertainty = score_frames(
+            teacher_results,
+            student_results,
+            mode=hybrid_uncertainty_mode,
+        )
+        uncertainty = {fid: s for fid, s in uncertainty.items() if fid in train_ids}
+        embeddings = {fid: v for fid, v in embeddings.items() if fid in train_ids}
+        return hybrid_selection(
+            frame_ids=train_ids,
+            uncertainty_scores=uncertainty,
+            embeddings=embeddings,
+            k=k,
+            diversity_weight=diversity_weight,
+        )
     scores = score_frames(teacher_results, student_results, mode)
     # Ensure we only select from the provided train IDs.
     scores = {fid: s for fid, s in scores.items() if fid in train_ids}
     return select_top_k(scores, k)
+
+
+def hybrid_selection(
+    frame_ids: List[str],
+    uncertainty_scores: Dict[str, float],
+    embeddings: Dict[str, np.ndarray],
+    k: int,
+    diversity_weight: float = 0.5,
+) -> List[str]:
+    """Select ``k`` frames maximizing normalized uncertainty + diversity.
+
+    Diversity is enforced by weighted k-center-greedy on the provided image
+    embeddings.  Both the uncertainty scores and the min-distance-to-selected
+    values are min-max normalized to [0, 1] per iteration so the weighted sum is
+    scale-free.  Ties are broken first by distance (prefer spread), then by
+    deterministic frame_id order.
+    """
+    if k <= 0:
+        return []
+    if not 0.0 <= diversity_weight <= 1.0:
+        raise ValueError(f"diversity_weight must be in [0, 1], got {diversity_weight}")
+
+    missing = [
+        fid
+        for fid in frame_ids
+        if fid not in uncertainty_scores or fid not in embeddings
+    ]
+    if missing:
+        raise KeyError(f"Missing uncertainty/embedding for {len(missing)} frame(s): {missing[:5]}")
+
+    available = frame_ids[:]
+    if k >= len(available):
+        return available
+
+    u_vals = np.array([uncertainty_scores[fid] for fid in available], dtype=float)
+    u_min, u_max = u_vals.min(), u_vals.max()
+    u_range = u_max - u_min
+    u_norm = (
+        (u_vals - u_min) / u_range
+        if u_range > 1e-12
+        else np.zeros_like(u_vals)
+    )
+
+    # Map frame id -> index in available[] for fast vectorized distance compute.
+    id_to_index = {fid: i for i, fid in enumerate(available)}
+    emb_matrix = np.stack([embeddings[fid] for fid in available])
+
+    selected: List[str] = []
+    remaining = set(available)
+
+    # Seed with the highest-uncertainty frame.
+    seed_idx = int(np.argmax(u_norm))
+    seed_id = available[seed_idx]
+    selected.append(seed_id)
+    remaining.remove(seed_id)
+
+    while remaining and len(selected) < k:
+        # Deterministic iteration order: sorted frame ids.
+        cand_ids = sorted(remaining)
+        cand_indices = np.array([id_to_index[fid] for fid in cand_ids])
+        cand_embs = emb_matrix[cand_indices]
+        sel_indices = np.array([id_to_index[fid] for fid in selected])
+        sel_embs = emb_matrix[sel_indices]
+        # Euclidean distance on L2-normalized vectors is monotonic with cosine distance.
+        dists = np.linalg.norm(cand_embs[:, None, :] - sel_embs[None, :, :], axis=2)
+        min_dists = dists.min(axis=1)
+
+        d_min, d_max = min_dists.min(), min_dists.max()
+        d_range = d_max - d_min
+        d_norm = (
+            (min_dists - d_min) / d_range
+            if d_range > 1e-12
+            else np.zeros_like(min_dists)
+        )
+
+        cand_u_norm = u_norm[cand_indices]
+        scores = (1.0 - diversity_weight) * cand_u_norm + diversity_weight * d_norm
+
+        # Tie-break: prefer larger diversity distance, then deterministic id order.
+        best_score = float(scores.max())
+        top_mask = scores == best_score
+        top_indices = np.where(top_mask)[0]
+        if len(top_indices) > 1:
+            best_dist = float(d_norm[top_indices].max())
+            top_indices = top_indices[d_norm[top_indices] == best_dist]
+        best_local_idx = int(top_indices[0])
+        best_id = cand_ids[best_local_idx]
+        selected.append(best_id)
+        remaining.remove(best_id)
+
+    return selected
 
 
 def check_separation(

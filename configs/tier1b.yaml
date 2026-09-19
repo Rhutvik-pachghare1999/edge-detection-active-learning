@@ -1,0 +1,40 @@
+experiment:
+  name: tier1b
+  subset_name: subset_4k
+  seeds:
+    - 42
+    - 43
+    - 44
+  k_values:
+    - 250
+    - 500
+    - 1000
+    - 2000
+  arms:
+    - random
+    - disagreement
+    - entropy
+    - hybrid
+  epochs: 15
+  imgsz: 640
+  batch: 16
+
+teacher:
+  model: PekingU/rtdetr_r50vd
+  conf_threshold: 0.30
+
+student:
+  model: models/yolov8n.onnx
+  conf_threshold: 0.25
+  image_size:
+    - 640
+    - 640
+
+hybrid:
+  uncertainty_mode: disagreement
+  diversity_weight: 0.5
+
+logging:
+  level: INFO
+  file: tier1b.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"

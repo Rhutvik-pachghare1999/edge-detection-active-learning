@@ -40,14 +40,28 @@ exists today. It is used to decide what the project can honestly say.
    no active-learning improvement claim can be made.
 6. If the Tier-1 reduced pass does **not** show HARVESTED beating RANDOM beyond
    noise, the active-learning improvement claim must be retracted or reframed as
-   "not observed at K ≤ 500 on COCO-2017 val."
+   "not observed at K ≤ 500 on COCO-2017 val." This occurred: the reduced pass
+   produced a null result (HARVESTED 0.5225 vs RANDOM 0.5319 at K=250).
 
 ## Tier-1 COCO benchmark audit plan
 
 | # | Claim | Source | Evidence needed | Status | Notes |
 |---|-------|--------|-----------------|--------|-------|
-| 11 | The COCO-2017 subset contains 1,500 images with 1,200 TRAIN_POOL and 300 TEST. | `docs/PHASE0_DATASET_PROPOSAL.md` | Run `scripts/fetch_dataset.py` and inspect `subset/manifest.json`. | planned | Deterministic split; no human labels used during selection. |
-| 12 | TRAIN_POOL and TEST are disjoint. | `scripts/fetch_dataset.py` | Verify `train_test_are_disjoint` and the manifest split field. | planned | Enforced by sorted-id slicing. |
-| 13 | Final accuracy is computed only against human COCO labels. | `scripts/run_tier1_experiment.py` | TEST labels come from COCO annotations; evaluation uses Ultralytics `val` on TEST only. | planned | Teacher pseudo-labels are never used for mAP. |
-| 14 | HARVESTED selection outperforms RANDOM at K = 250. | Hypothesis under test | Reduced-first-pass results: mean ± std of mAP50 over 3 seeds. | planned | Continue to full sweep only if `mean_h - mean_r > std_h + std_r`. |
-| 15 | The full budget sweep compares HARVESTED, RANDOM, and ENTROPY at K = {100, 250, 500}. | `configs/tier1_full.yaml` | Full-sweep results under `results/tier1/full_sweep/`. | planned | Only executed if reduced pass shows separation. |
+| 11 | The COCO-2017 subset contains 1,500 images with 1,200 TRAIN_POOL and 300 TEST. | `docs/PHASE0_DATASET_PROPOSAL.md` | Run `scripts/fetch_dataset.py` and inspect `subset/manifest.json`. | verified | Reduced pass executed; manifest and summary exist. |
+| 12 | TRAIN_POOL and TEST are disjoint. | `scripts/fetch_dataset.py` | Verify `train_test_are_disjoint` and the manifest split field. | verified | Unit tests enforce disjointness. |
+| 13 | Final accuracy is computed only against human COCO labels. | `scripts/run_tier1_experiment.py` | TEST labels come from COCO annotations; evaluation uses Ultralytics `val` on TEST only. | verified | Teacher pseudo-labels are never used for mAP. |
+| 14 | HARVESTED selection outperforms RANDOM at K = 250. | Hypothesis under test | Reduced-first-pass results: mean ± std of mAP50 over 3 seeds. | false / null | HARVESTED mAP50 0.5225 < RANDOM 0.5319; separation check failed. |
+| 15 | The full budget sweep compares HARVESTED, RANDOM, and ENTROPY at K = {100, 250, 500}. | `configs/tier1_full.yaml` | Full-sweep results under `results/tier1/full_sweep/`. | not executed | Skipped because reduced pass did not show separation. |
+
+## Tier-1B COCO benchmark audit plan
+
+A larger, fairer follow-up benchmark is ready to run:
+
+| # | Claim | Source | Evidence needed | Status | Notes |
+|---|-------|--------|-----------------|--------|-------|
+| 16 | The Tier-1B subset contains 5,000 COCO-2017 val images: 4,000 TRAIN_POOL and 1,000 TEST. | `docs/RESULTS.md`, `scripts/fetch_dataset.py` | Run `scripts/fetch_dataset.py --subset-name subset_4k --subset-size 5000 --train-size 4000` and inspect `subset_4k/manifest.json`. | planned | Deterministic split; no human labels used during selection. |
+| 17 | TRAIN_POOL and TEST in `subset_4k` are disjoint. | `scripts/fetch_dataset.py` | `train_test_are_disjoint(subset_4k/manifest)`; unit tests. | planned | Enforced by sorted-id slicing. |
+| 18 | Hybrid acquisition uses real image features and normalized uncertainty+diversity. | `src/aecs_sdc/acquisition.py`, `src/aecs_sdc/embeddings.py` | Unit tests; cache file `pool_embeddings.npy`. | planned | ResNet18 ImageNet embeddings, min-max normalized disagreement and distance terms, k-center-greedy. |
+| 19 | Final Tier-1B accuracy is computed only against human COCO TEST labels. | `scripts/run_tier1_experiment.py` | `data/coco2017/subset_4k/labels/val/` are COCO annotations; Ultralytics `val` uses only the val split. | planned | Teacher pseudo-labels used only for selection and training labels. |
+| 20 | An acquisition arm "beats random" only if `mean(arm) - mean(random) > std(arm) + std(random)` at a given K. | `src/aecs_sdc/acquisition.py`, `docs/RESULTS.md` | `tier1b_results_aggregated.json` and `tier1b_map50.png`. | planned | Honest null/negative reporting if the separation rule is not met. |
+| 21 | YOLOv8n is fine-tuned for 15 epochs on each arm/seed/K. | `configs/tier1b.yaml`, `sol/run_tier1b.sbatch` | Training logs under `results/tier1b/runs/`. | planned | Same hparams across arms; 8-hour A100 walltime. |

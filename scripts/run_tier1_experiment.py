@@ -52,6 +52,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from aecs_sdc.acquisition import check_separation, select_subset, select_top_k
 from aecs_sdc.coco_label_map import NUM_COCO_CLASSES, remap_class_id
+from aecs_sdc.embeddings import ImageFeatureExtractor, ensure_embeddings_cache
 from aecs_sdc.logging_config import configure_logging
 from aecs_sdc.student import StudentModel
 from aecs_sdc.teacher import TeacherModel
@@ -122,6 +123,7 @@ def ensure_teacher_cache(
     train_ids: List[str],
     teacher_cfg: dict,
     device: str,
+    subset_name: str = "subset",
 ) -> Dict[str, dict]:
     """Run RT-DETR on TRAIN_POOL and cache pseudo-labels as JSON."""
     cache_path = output_dir / "teacher_pseudo_labels.json"
@@ -136,8 +138,8 @@ def ensure_teacher_cache(
         device=device,
         conf_threshold=float(teacher_cfg.get("conf_threshold", 0.30)),
     )
-    lookup = manifest_id_to_info(load_manifest(data_root / "subset" / "manifest.json"))
-    subset_root = data_root / "subset"
+    subset_root = data_root / subset_name
+    lookup = manifest_id_to_info(load_manifest(subset_root / "manifest.json"))
 
     results: Dict[str, dict] = {}
     for idx, im_id in enumerate(train_ids, 1):
@@ -162,6 +164,7 @@ def ensure_student_cache(
     student_onnx: str,
     student_conf: float,
     image_size: List[int],
+    subset_name: str = "subset",
 ) -> Dict[str, dict]:
     """Run YOLOv8n ONNX student on TRAIN_POOL and cache predictions as JSON."""
     cache_path = output_dir / "student_predictions.json"
@@ -176,8 +179,8 @@ def ensure_student_cache(
         conf_threshold=float(student_conf),
         input_size=tuple(image_size),
     )
-    lookup = manifest_id_to_info(load_manifest(data_root / "subset" / "manifest.json"))
-    subset_root = data_root / "subset"
+    subset_root = data_root / subset_name
+    lookup = manifest_id_to_info(load_manifest(subset_root / "manifest.json"))
 
     results: Dict[str, dict] = {}
     for idx, im_id in enumerate(train_ids, 1):
@@ -195,6 +198,88 @@ def ensure_student_cache(
     return results
 
 
+def ensure_pool_embeddings(
+    data_root: Path,
+    output_dir: Path,
+    train_ids: List[str],
+    manifest: dict,
+    device: str,
+    subset_name: str = "subset",
+    batch_size: int = 32,
+) -> Dict[str, np.ndarray]:
+    """Compute and cache ResNet18 image embeddings for the TRAIN_POOL.
+
+    Embeddings are keyed by COCO image id so they remain valid if the cache is
+    reused across runs with the same manifest.
+    """
+    cache_path = output_dir / "pool_embeddings.npy"
+    if cache_path.exists():
+        logger.info(f"Loading cached pool embeddings from {cache_path}")
+        data = np.load(cache_path, allow_pickle=True)
+        loaded = data.item() if isinstance(data, np.ndarray) and data.dtype == object else dict(data)
+        # Accept either id-keyed or absolute-path-keyed caches.
+        if set(train_ids).issubset(set(loaded.keys())):
+            return {im_id: loaded[im_id] for im_id in train_ids}
+        # Convert path-keyed cache to id-keyed.
+        lookup = manifest_id_to_info(manifest)
+        subset_root = data_root / subset_name
+        id_to_path = {
+            im_id: str((subset_root / "images" / "train" / lookup[im_id]["file_name"]).resolve())
+            for im_id in train_ids
+        }
+        id_embeddings = {}
+        for im_id, path in id_to_path.items():
+            if path in loaded:
+                id_embeddings[im_id] = loaded[path]
+        if len(id_embeddings) == len(train_ids):
+            return id_embeddings
+        logger.warning("Cached embeddings incomplete; recomputing")
+
+    logger.info("Computing ResNet18 embeddings for TRAIN_POOL")
+    extractor = ImageFeatureExtractor(device=device)
+    lookup = manifest_id_to_info(manifest)
+    subset_root = data_root / subset_name
+    image_paths = [
+        str((subset_root / "images" / "train" / lookup[im_id]["file_name"]).resolve())
+        for im_id in train_ids
+    ]
+    path_embeddings = extractor.extract_batch(image_paths, batch_size=batch_size)
+    id_embeddings = {
+        im_id: path_embeddings[str(path)]
+        for im_id, path in zip(train_ids, image_paths)
+    }
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(cache_path, id_embeddings)
+    logger.info(f"Cached {len(id_embeddings)} pool embeddings to {cache_path}")
+    return id_embeddings
+
+
+def epochs_for_k(base_epochs: int, k: int, ref_k: int = 250, max_epochs: int = 120) -> int:
+    """Scale epochs so total gradient steps stay ~constant across budgets.
+
+    The original protocol trained every K for a fixed ``base_epochs`` (15).
+    A fixed epoch count means larger K sees far more images per epoch and the
+    same number of epochs, so total optimizer steps grow with K while *epochs*
+    (the thing that governs convergence on a small set) stay flat. In practice
+    the small-K runs converged and the large-K runs were badly undertrained,
+    which is why mAP fell monotonically as K grew and masked the arm gaps.
+
+    We anchor ``base_epochs`` at ``ref_k`` (the smallest, well-behaved budget)
+    and scale up inversely with K so every budget gets a comparable number of
+    passes over a fixed *number of images*:
+
+        epochs(K) = round(base_epochs * ref_k / K), clamped to [base_epochs//3, max]
+
+    Note this depends only on K (the training-set size), never on the TEST set,
+    so it introduces no leakage into model selection.
+    """
+    if k <= 0:
+        return base_epochs
+    scaled = round(base_epochs * ref_k / k)
+    lower = max(1, base_epochs // 3)
+    return int(np.clip(scaled, lower, max_epochs))
+
+
 def train_and_evaluate(
     data_yaml: Path,
     base_model: Path,
@@ -206,7 +291,15 @@ def train_and_evaluate(
     batch: int,
     seed: int,
 ) -> Optional[dict]:
-    """Fine-tune YOLOv8n and evaluate on the val split (human TEST labels)."""
+    """Fine-tune YOLOv8n and evaluate on the val split (human TEST labels).
+
+    Model selection uses ``last.pt`` after a fixed, K-scaled schedule. We
+    deliberately do NOT use YOLO's ``patience`` early stopping or ``best.pt``,
+    because those select the checkpoint by watching the val split -- which here
+    is the held-out human TEST set. Selecting on TEST would leak it into model
+    selection and invalidate the honest evaluation. A fixed leak-free schedule
+    trained to convergence is the correct choice here.
+    """
     try:
         from ultralytics import YOLO
     except Exception as e:
@@ -215,7 +308,7 @@ def train_and_evaluate(
 
     set_seed(seed)
 
-    logger.info(f"Training run {run_name} on {data_yaml}")
+    logger.info(f"Training run {run_name} on {data_yaml} for {epochs} epochs")
     run_dir = output_dir / "runs" / run_name
     if run_dir.exists():
         shutil.rmtree(run_dir)
@@ -285,6 +378,7 @@ def run_experiment(
     exp_cfg = cfg.get("experiment", {})
     teacher_cfg = cfg.get("teacher", {})
     student_cfg = cfg.get("student", {})
+    hybrid_cfg = cfg.get("hybrid", {})
 
     seeds = list(exp_cfg.get("seeds", [42, 43, 44]))
     k_values = list(exp_cfg.get("k_values", [250]))
@@ -292,20 +386,21 @@ def run_experiment(
     epochs = int(exp_cfg.get("epochs", 10))
     imgsz = int(exp_cfg.get("imgsz", 640))
     batch = int(exp_cfg.get("batch", 16))
+    subset_name = str(exp_cfg.get("subset_name", "subset"))
 
-    manifest_path = data_root / "subset" / "manifest.json"
+    manifest_path = data_root / subset_name / "manifest.json"
     if not manifest_path.exists():
         raise FileNotFoundError(f"Manifest not found: {manifest_path}")
     manifest = load_manifest(manifest_path)
 
     train_ids, test_ids = manifest_split_ids(manifest)
-    logger.info(f"Loaded manifest: TRAIN_POOL={len(train_ids)}, TEST={len(test_ids)}")
+    logger.info(f"Loaded manifest: TRAIN_POOL={len(train_ids)}, TEST={len(test_ids)} ({subset_name})")
     if not train_test_are_disjoint(manifest):
         raise ValueError("TRAIN_POOL and TEST are not disjoint; leakage detected")
 
     # Teacher and student caches.
     teacher_results = ensure_teacher_cache(
-        data_root, output_dir, train_ids, teacher_cfg, device
+        data_root, output_dir, train_ids, teacher_cfg, device, subset_name
     )
     student_results = ensure_student_cache(
         data_root,
@@ -314,9 +409,30 @@ def run_experiment(
         str(student_onnx),
         float(student_cfg.get("conf_threshold", 0.25)),
         list(student_cfg.get("image_size", [640, 640])),
+        subset_name,
     )
 
-    # Optional diversity term: keep a running class-count cap per arm.
+    # Pre-compute image embeddings once if any diversity-aware arm is requested.
+    # Diversity arms: "hybrid" (legacy name), "entropy_div", "disagreement_div".
+    _DIVERSITY_ARMS = {"hybrid", "entropy_div", "disagreement_div"}
+    # Map each diversity arm to the uncertainty signal it should combine with
+    # k-center-greedy diversity. "hybrid" keeps its config-driven default.
+    _DIV_UNCERTAINTY = {
+        "entropy_div": "entropy",
+        "disagreement_div": "disagreement",
+    }
+    needs_embeddings = any(a in _DIVERSITY_ARMS for a in arms)
+    pool_embeddings: Optional[Dict[str, np.ndarray]] = None
+    if needs_embeddings:
+        pool_embeddings = ensure_pool_embeddings(
+            data_root=data_root,
+            output_dir=output_dir,
+            train_ids=train_ids,
+            manifest=manifest,
+            device=device,
+            subset_name=subset_name,
+        )
+
     results: List[dict] = []
 
     for k in k_values:
@@ -326,14 +442,32 @@ def run_experiment(
         for arm in arms:
             for seed in seeds:
                 set_seed(seed)
-                selected = select_subset(
-                    mode="disagreement" if arm == "harvested" else arm,
-                    train_ids=train_ids,
-                    teacher_results=teacher_results,
-                    student_results=student_results,
-                    k=k,
-                    seed=seed,
-                )
+                if arm in _DIVERSITY_ARMS:
+                    # Route through hybrid_selection: uncertainty + diversity.
+                    uncertainty_mode = _DIV_UNCERTAINTY.get(
+                        arm, str(hybrid_cfg.get("uncertainty_mode", "disagreement"))
+                    )
+                    select_kwargs = {
+                        "mode": "hybrid",
+                        "train_ids": train_ids,
+                        "teacher_results": teacher_results,
+                        "student_results": student_results,
+                        "k": k,
+                        "seed": seed,
+                        "embeddings": pool_embeddings,
+                        "hybrid_uncertainty_mode": uncertainty_mode,
+                        "diversity_weight": float(hybrid_cfg.get("diversity_weight", 0.5)),
+                    }
+                else:
+                    select_kwargs = {
+                        "mode": "disagreement" if arm == "harvested" else arm,
+                        "train_ids": train_ids,
+                        "teacher_results": teacher_results,
+                        "student_results": student_results,
+                        "k": k,
+                        "seed": seed,
+                    }
+                selected = select_subset(**select_kwargs)
                 if len(selected) != k:
                     logger.warning(
                         f"Selection returned {len(selected)} ids for K={k}; requested {k}"
@@ -341,17 +475,30 @@ def run_experiment(
 
                 run_name = f"{arm}_k{k}_seed{seed}"
                 ds_dir = output_dir / "datasets" / run_name
+                # Fix #3: filter teacher pseudo-labels by confidence before they
+                # become training labels. Low-confidence teacher boxes are the
+                # main noise source, and that noise grows with K. A floor keeps
+                # only boxes the teacher is reasonably sure about. Floor of 0.0
+                # (default) reproduces the original all-boxes behavior.
+                label_floor = float(teacher_cfg.get("train_label_conf", 0.0))
+                pseudo_labels = {}
+                for im_id in selected:
+                    dets = teacher_results.get(im_id, {}).get("detections", [])
+                    if label_floor > 0.0:
+                        dets = [
+                            d for d in dets
+                            if float(d.get("score", d.get("confidence", 1.0))) >= label_floor
+                        ]
+                    pseudo_labels[im_id] = dets
                 data_yaml = prepare_yolo_dataset(
                     data_root=data_root,
                     output_dir=ds_dir,
                     selected_train_ids=selected,
                     test_ids=test_ids,
-                    train_pseudo_labels={
-                        im_id: teacher_results.get(im_id, {}).get("detections", [])
-                        for im_id in selected
-                    },
+                    train_pseudo_labels=pseudo_labels,
                     manifest=manifest,
-                    subset_name=run_name,
+                    subset_name=subset_name,
+                    run_name=run_name,
                 )
 
                 metrics = train_and_evaluate(
@@ -360,7 +507,7 @@ def run_experiment(
                     output_dir=ds_dir,
                     run_name="train",
                     device=device,
-                    epochs=epochs,
+                    epochs=epochs_for_k(epochs, k),
                     imgsz=imgsz,
                     batch=batch,
                     seed=seed,
@@ -436,7 +583,11 @@ def main():
         raise FileNotFoundError(f"ONNX student not found: {student_onnx}")
 
     if args.skip_cache:
-        for cache in [output_dir / "teacher_pseudo_labels.json", output_dir / "student_predictions.json"]:
+        for cache in [
+            output_dir / "teacher_pseudo_labels.json",
+            output_dir / "student_predictions.json",
+            output_dir / "pool_embeddings.npy",
+        ]:
             if cache.exists():
                 cache.unlink()
 
@@ -469,10 +620,11 @@ def main():
             full_output = output_dir / "full_sweep"
             full_results = run_experiment(full_cfg, data_root, full_output, base_model, student_onnx, device)
             full_aggregated = aggregate_results(full_results)
-            save_results(full_results, full_aggregated, full_output, name="tier1_full")
+            full_name = full_cfg.get("experiment", {}).get("name", "tier1_full")
+            save_results(full_results, full_aggregated, full_output, name=full_name)
             plot_map50(
                 full_aggregated,
-                output_path=full_output / "tier1_full_map50.png",
+                output_path=full_output / f"{full_name}_map50.png",
                 arms=full_cfg.get("experiment", {}).get("arms", ["harvested", "random", "entropy"]),
                 metric="mAP50",
             )
@@ -481,6 +633,7 @@ def main():
                 f"Reduced pass does NOT show separation at K={target_k}; full sweep skipped"
             )
 
+    exp_name = cfg.get("experiment", {}).get("name", "tier1")
     summary = {
         "started_at": started_at,
         "finished_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -491,7 +644,7 @@ def main():
         "results_count": len(results),
         "aggregated": aggregated,
     }
-    with open(output_dir / "tier1_summary.json", "w") as f:
+    with open(output_dir / f"{exp_name}_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
     logger.info("Tier-1 experiment complete")
     print(json.dumps(summary, indent=2))

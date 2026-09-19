@@ -1,0 +1,57 @@
+# Tier-1B v2 — improved sweep.
+#
+# Changes vs tier1b.yaml, all aimed at turning the negative disagreement result
+# into a fair, stronger benchmark:
+#   1. epochs_for_k() in the runner scales epochs with K (protocol fix; no
+#      config knob needed — it wraps `epochs` below as the K=250 anchor).
+#   2. New diversity-aware arms: entropy_div and disagreement_div route the
+#      uncertainty signal through k-center-greedy diversity so uncertainty arms
+#      stop selecting redundant near-duplicate frames.
+#   3. teacher.train_label_conf floors pseudo-label confidence at 0.5, dropping
+#      the ~45% of teacher boxes below 0.5 that inject the most label noise.
+#
+# Arms kept lean to fit wall clock: random (baseline), entropy (prior winner),
+# disagreement (project thesis), disagreement_div (fixed thesis), entropy_div
+# (best-case). K=2000 dropped — the K=250->1000 trend is already decisive and
+# K=2000 timed out last run without changing the ranking.
+experiment:
+  name: tier1b_v2
+  subset_name: subset_4k
+  seeds:
+    - 42
+    - 43
+    - 44
+  k_values:
+    - 250
+    - 500
+    - 1000
+  arms:
+    - random
+    - entropy
+    - disagreement
+    - disagreement_div
+    - entropy_div
+  epochs: 15
+  imgsz: 640
+  batch: 16
+
+teacher:
+  model: PekingU/rtdetr_r50vd
+  conf_threshold: 0.30
+  train_label_conf: 0.50   # fix #3: drop teacher boxes below this before training
+
+student:
+  model: models/yolov8n.onnx
+  conf_threshold: 0.25
+  image_size:
+    - 640
+    - 640
+
+hybrid:
+  uncertainty_mode: disagreement
+  diversity_weight: 0.5
+
+logging:
+  level: INFO
+  file: tier1b_v2.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"

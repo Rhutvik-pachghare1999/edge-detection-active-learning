@@ -107,7 +107,8 @@ def test_prepare_yolo_dataset():
             test_ids=["4", "5"],
             train_pseudo_labels=pseudo,
             manifest=manifest,
-            subset_name="testrun",
+            subset_name="subset",
+            run_name="testrun",
         )
 
         assert data_yaml.exists()

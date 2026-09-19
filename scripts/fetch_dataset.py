@@ -100,11 +100,12 @@ def convert_bbox_coco_to_yolo(
 
 def build_subset(
     coco_root: Path,
-    out_root: Path,
+    data_root: Path,
     subset_size: int,
     train_size: int,
+    subset_name: str = "subset",
 ) -> Dict:
-    """Create the fixed TRAIN_POOL/TEST split and YOLO labels.
+    """Create the fixed TRAIN_POOL/TEST split and YOLO labels under ``data_root/subset_name``.
 
     Returns the manifest dictionary.
     """
@@ -143,6 +144,7 @@ def build_subset(
         print(f"Note: skipped {len(skipped_cats)} non-COCO-80 categories "
               f"in the annotation file.", file=sys.stderr)
 
+    out_root = data_root / subset_name
     img_dir = out_root / "images"
     lbl_dir = out_root / "labels"
     img_dir.mkdir(parents=True, exist_ok=True)
@@ -207,6 +209,8 @@ def main():
     parser = argparse.ArgumentParser(description="Fetch COCO-2017 val subset")
     parser.add_argument("--data-root", type=str, default="data/coco2017",
                         help="Root directory to store downloaded COCO data and subset.")
+    parser.add_argument("--subset-name", type=str, default="subset",
+                        help="Name of the prepared subset directory under data-root.")
     parser.add_argument("--subset-size", type=int, default=DEFAULT_SUBSET_SIZE,
                         help="Total number of images in the fixed subset.")
     parser.add_argument("--train-size", type=int, default=DEFAULT_TRAIN_SIZE,
@@ -242,17 +246,19 @@ def main():
     # 3. Build fixed subset + YOLO labels.
     manifest = build_subset(
         coco_root,
-        subset_root,
+        data_root,
         args.subset_size,
         args.train_size,
+        subset_name=args.subset_name,
     )
 
     # 4. Write manifest.
-    manifest_path = subset_root / "manifest.json"
+    manifest_path = data_root / args.subset_name / "manifest.json"
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
 
     # 5. Write a small human-readable summary.
+    subset_root = data_root / args.subset_name
     summary_path = subset_root / "SUBSET_SUMMARY.txt"
     summary_lines = [
         "COCO-2017 Validation Subset",

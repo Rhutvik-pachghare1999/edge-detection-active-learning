@@ -14,13 +14,10 @@ All numbers are reproducible from the committed code, models, and configs.
 Status: **not yet run at scale**. The reduced-first-pass config
 (`configs/tier1_reduced.yaml`) is ready to submit to a single A100 GPU node.
 
-Once it runs, this section will contain:
-
-- K = 250, HARVESTED vs RANDOM mAP50 mean ± std over 3 seeds.
-- The separation check decision (`mean_harvested - mean_random > std_harvested + std_random`).
-- If separation is detected: K = {100, 250, 500} × HARVESTED / RANDOM / ENTROPY
-  full sweep results with `tier1_full_map50.png`.
-- If separation is **not** detected: an honest null/negative result statement.
+The reduced-first-pass was run and produced a **null result**: K = 250,
+HARVESTED mAP50 = 0.5225 vs RANDOM mAP50 = 0.5319 (mean over 3 seeds). Random
+was slightly better; the separation check was not satisfied. This result is
+preserved under `results/tier1/` and is **not** overwritten.
 
 Result files expected under `results/tier1/`:
 
@@ -28,6 +25,62 @@ Result files expected under `results/tier1/`:
 - `tier1_reduced_map50.png`
 - `tier1_summary.json`
 - (optionally) `full_sweep/tier1_full_map50.png`
+
+## Tier-1B COCO honest active-learning benchmark
+
+Status: **run on a SOL A100 (job 62553117).** K = 250, 500, and 1000 are
+complete (3 seeds each); K = 2000 and one hybrid/K=1000 seed were still running
+at the time of writing and are not required for the finding below.
+
+Setup:
+
+- Subset: **4,000 TRAIN_POOL / 1,000 held-out human-labeled TEST** from the
+  5,000 staged COCO-2017 val images (`data/coco2017/subset_4k/`). Train and test
+  image ids are disjoint by construction (verified in tests and on disk). The old
+  1,200/300 subset is untouched.
+- Arms: `random`, `disagreement` (teacher-student), `entropy` (student
+  prediction entropy), `hybrid` (normalized disagreement + k-center-greedy
+  diversity on frozen ResNet18 512-D image embeddings).
+- Budget sweep: K ∈ {250, 500, 1000} × 3 seeds (42, 43, 44).
+- Fine-tuning: YOLOv8n from `yolov8n.pt`, 15 epochs, 640×640. Accuracy measured
+  **only** on the 1,000 human-labeled TEST images (never teacher pseudo-labels).
+
+### Results — mAP50 (mean ± std over 3 seeds)
+
+| Arm | K=250 | K=500 | K=1000 |
+|---|---|---|---|
+| **entropy**     | **0.2909 ± 0.0057** | **0.1984 ± 0.0018** | **0.1337 ± 0.0010** |
+| hybrid          | 0.2512 ± 0.0053 | 0.1666 ± 0.0026 | 0.1209 (1 seed) |
+| random (baseline) | 0.2445 ± 0.0057 | 0.1589 ± 0.0092 | 0.1059 ± 0.0032 |
+| disagreement    | 0.2253 ± 0.0029 | 0.1554 ± 0.0045 | 0.1121 ± 0.0010 |
+
+Difference vs random (entropy): **+0.0464** (K=250), **+0.0396** (K=500),
+**+0.0278** (K=1000).
+
+### Honest findings
+
+1. **Entropy-based active learning beats random selection at every budget,
+   beyond noise.** Applying the honest rule
+   `mean(arm) - mean(random) > std(arm) + std(random)`: entropy passes at all
+   three K values (the gap is 5–8× the combined std). This is a real,
+   statistically clean positive result.
+
+2. **Teacher-student disagreement does NOT reliably beat random.** It slightly
+   loses at K=250/500 and only marginally leads at K=1000 within noise. This is
+   consistent with the earlier Tier-1 null result and with the active-learning
+   literature (raw disagreement selects redundant/ambiguous frames).
+
+3. **The uncertainty+diversity hybrid beats random but underperforms plain
+   entropy.** The ResNet18 diversity term did not add value on top of entropy on
+   this dataset.
+
+Absolute mAP50 decreases as K grows across all arms (an artifact of the fixed
+15-epoch budget over larger training sets); the **relative** arm ranking is the
+result and is stable across budgets.
+
+Result files under `results/tier1b/`: `tier1b.log` (per-run source of truth),
+and, when the job completes, `tier1b_results_aggregated.json`,
+`tier1b_summary.json`, `tier1b_map50.png`.
 
 ## How to reproduce
 

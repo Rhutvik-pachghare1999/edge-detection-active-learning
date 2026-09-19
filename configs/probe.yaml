@@ -1,0 +1,44 @@
+# Probe config — validates the K-scaled epoch fix (epochs_for_k) before
+# committing the full multi-hour sweep.
+#
+# Single arm (random), single seed, the three completed budgets. This isolates
+# the training-protocol change: if the old mAP-vs-K collapse (0.24 -> 0.11 for
+# random) flattens under the new schedule, the fix works and we run the full
+# sweep. If not, we stop and address pseudo-label noise instead.
+#
+# Reuses the existing teacher/student caches (symlinked into the probe output
+# dir), so no RT-DETR relabeling is needed — this is why the probe is cheap.
+experiment:
+  name: probe
+  subset_name: subset_4k
+  seeds:
+    - 42
+  k_values:
+    - 250
+    - 500
+    - 1000
+  arms:
+    - random
+  epochs: 15
+  imgsz: 640
+  batch: 16
+
+teacher:
+  model: PekingU/rtdetr_r50vd
+  conf_threshold: 0.30
+
+student:
+  model: models/yolov8n.onnx
+  conf_threshold: 0.25
+  image_size:
+    - 640
+    - 640
+
+hybrid:
+  uncertainty_mode: disagreement
+  diversity_weight: 0.5
+
+logging:
+  level: INFO
+  file: probe.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"
