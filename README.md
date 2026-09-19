@@ -1,4 +1,4 @@
-# AECS-SDC — An Honest Active-Learning Benchmark for Edge Object Detection
+# Edge Detection Active Learning — An Honest Benchmark for Label-Efficient Object Detection
 
 [![CI](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml)
 ![tests](https://img.shields.io/badge/tests-66%20passing-brightgreen)
