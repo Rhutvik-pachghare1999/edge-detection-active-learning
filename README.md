@@ -15,10 +15,11 @@ number below is measured against **held-out human COCO labels**, never against
 the teacher model's own guesses.
 
 > **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested by
-> **+0.028 to +0.046 mAP50** (margin largest at small budgets). The intuitive
+> **+0.039 to +0.061 mAP50** (margin largest at small budgets). The intuitive
 > **teacher-student disagreement** signal — the original hypothesis of this
 > project — **does not beat random**. Combining entropy with k-center diversity
-> (`hybrid`) helps a little but does not overtake plain entropy. This is a clean
+> (`entropy_div`) is the best arm at K=250 (0.317) but does not decisively beat
+> plain entropy overall. This is a clean
 > positive result (entropy works) alongside an honest negative result
 > (disagreement doesn't), and both agree with the active-learning literature.
 
@@ -39,33 +40,38 @@ the teacher model's own guesses.
   | `random` | uniform baseline |
   | `entropy` | highest student prediction entropy (uncertainty) |
   | `disagreement` | highest teacher-student box/confidence disagreement |
-  | `hybrid` | entropy + k-center-greedy diversity |
+  | `disagreement_div` | disagreement + k-center-greedy diversity |
+  | `entropy_div` | entropy + k-center-greedy diversity |
 
 Run on an **ASU SOL A100** node via SLURM (`sol/run_tier1b_v2.sbatch`).
 
 ## Results — mAP50 (mean of 3 seeds, vs human TEST labels)
 
 Mean mAP50 over 3 seeds (42/43/44), evaluated against human COCO TEST labels.
-These numbers come directly from `results/tier1b/tier1b.log` (SOL A100 job 62553117).
+These are the authoritative **tier1b_v2** results from the SOL A100 run
+(`results/tier1b_v2/tier1b_v2_aggregated.json`, started 2026-09-05, 45 result
+records; sha256 `3ef5acef…4191c93`).
 
 | Arm | K=250 | K=500 | K=1000 | vs random |
 |-----|------:|------:|-------:|----------:|
-| **entropy**     | **0.291** | **0.198** | **0.134** | **+0.028 to +0.046** |
-| hybrid (entropy + k-center diversity) | 0.251 | 0.167 | 0.121 | small gain |
-| random (baseline) | 0.244 | 0.159 | 0.106 | — |
-| disagreement      | 0.225 | 0.155 | 0.112 | at/below random |
+| **entropy_div** (entropy + k-center) | **0.317** | 0.290 | 0.261 | best at K=250 |
+| **entropy** | 0.311 | **0.299** | **0.264** | +0.039 to +0.061 |
+| disagreement_div | 0.250 | 0.237 | 0.228 | ~parity |
+| random (baseline) | 0.250 | 0.231 | 0.225 | — |
+| disagreement | 0.227 | 0.222 | 0.215 | at/below random |
 
 ![mAP50 by acquisition strategy across labeling budgets](results/tier1b_v2/tier1b_v2_map50.png)
 
 ### Findings
 
-1. **Entropy sampling wins at every budget** — +0.046 (K=250), +0.040 (K=500),
-   +0.028 (K=1000) mAP50 over random, comfortably above the seed-to-seed std.
-   A clean positive result, though the margin shrinks as the budget grows.
+1. **Entropy sampling wins at every budget** — +0.061 (K=250), +0.068 (K=500),
+   +0.039 (K=1000) mAP50 over random, well above the seed-to-seed std.
+   A clean positive result.
 2. **Teacher-student disagreement does not beat random.** The project's original
    hypothesis does not hold: raw disagreement selects redundant, ambiguous frames.
-3. **Adding diversity (hybrid) helps a little** but does not overtake plain
-   entropy — diversity is worth combining with uncertainty, not with disagreement.
+3. **Diversity + entropy (`entropy_div`) is the top arm at K=250** (0.317) and
+   competitive elsewhere — diversity is worth combining with uncertainty, not
+   with disagreement (`disagreement_div` only reaches ~parity with random).
 4. **Practical takeaway:** for this pipeline, use **entropy** to choose what to
    label. Reserve disagreement for *flagging* failures, not *selecting* data.
 
