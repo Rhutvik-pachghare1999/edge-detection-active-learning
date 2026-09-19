@@ -1,5 +1,10 @@
 # AECS-SDC — An Honest Active-Learning Benchmark for Edge Object Detection
 
+[![CI](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml)
+![tests](https://img.shields.io/badge/tests-66%20passing-brightgreen)
+![license](https://img.shields.io/badge/license-MIT-blue)
+
+
 **One-line problem:** Labeling data is the bottleneck when you retrain a small
 object detector for the edge. Given a large unlabeled image pool and a tiny
 labeling budget, *which images should you label to improve the model the most?*
@@ -93,7 +98,7 @@ Three protocol fixes (see `scripts/run_tier1_experiment.py`), each validated:
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-python -m pytest tests/ -q          # dataset integrity, leakage, acquisition, prep
+python -m pytest tests/ -q          # 66 tests: dataset integrity, leakage, acquisition, prep
 
 # 1. Stage the fixed COCO subset (internet needed once)
 python scripts/fetch_dataset.py --data-root data/coco2017 \
@@ -115,7 +120,7 @@ Outputs: `results/tier1b_v2/tier1b_v2_aggregated.json` (mean±std per arm/K),
 src/aecs_sdc/       benchmark package (acquisition, disagreement, dataset, tier1, ...)
 scripts/            run_tier1_experiment.py, fetch_dataset.py, retrain_experiment.py
 configs/            tier1b_v2.yaml (main sweep), probe.yaml, benchmark.yaml
-tests/              11 test files: dataset integrity, split leakage, acquisition, prep
+tests/              66 tests across 11 files: dataset integrity, split leakage, acquisition, prep
 sol/                A100 SLURM scripts + COMMANDS.md (cluster run recipe)
 results/tier1b_v2/  aggregated JSON, mAP50 plot, per-run log
 models/yolov8n.onnx committed student model
