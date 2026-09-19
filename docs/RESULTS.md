@@ -63,7 +63,7 @@ Difference vs random (entropy): **+0.0464** (K=250), **+0.0396** (K=500),
    beyond noise.** Applying the honest rule
    `mean(arm) - mean(random) > std(arm) + std(random)`: entropy passes at all
    three K values (the gap is 5–8× the combined std). This is a real,
-   statistically clean positive result.
+   positive result that passes the benchmark's predefined separation rule (gap > combined std).
 
 2. **Teacher-student disagreement does NOT reliably beat random.** It slightly
    loses at K=250/500 and only marginally leads at K=1000 within noise. This is
@@ -82,7 +82,6 @@ Result files under `results/tier1b/`: `tier1b.log` (per-run source of truth),
 and, when the job completes, `tier1b_results_aggregated.json`,
 `tier1b_summary.json`, `tier1b_map50.png`.
 
-## How to reproduce
 
 ## How to reproduce
 

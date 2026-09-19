@@ -14,8 +14,7 @@ COCO-2017, comparing five data-selection ("acquisition") strategies. Every
 number below is measured against **held-out human COCO labels**, never against
 the teacher model's own guesses.
 
-> **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested
-> **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested
+> **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested by
 > **+0.028 to +0.046 mAP50** (margin largest at small budgets). The intuitive
 > **teacher-student disagreement** signal — the original hypothesis of this
 > project — **does not beat random**. Combining entropy with k-center diversity
