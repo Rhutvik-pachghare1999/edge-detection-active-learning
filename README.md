@@ -14,12 +14,14 @@ COCO-2017, comparing five data-selection ("acquisition") strategies. Every
 number below is measured against **held-out human COCO labels**, never against
 the teacher model's own guesses.
 
-> **TL;DR finding:** Prediction-**entropy** sampling beats random selection by
-> **+0.06 mAP50** at every budget. The intuitive **teacher-student disagreement**
-> signal — the original hypothesis of this project — **does not beat random**;
-> adding k-center diversity only lifts it to parity. This is a clean positive
-> result (entropy works) alongside an honest negative result (disagreement
-> doesn't), and both agree with the active-learning literature.
+> **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested
+> **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested
+> **+0.028 to +0.046 mAP50** (margin largest at small budgets). The intuitive
+> **teacher-student disagreement** signal — the original hypothesis of this
+> project — **does not beat random**. Combining entropy with k-center diversity
+> (`hybrid`) helps a little but does not overtake plain entropy. This is a clean
+> positive result (entropy works) alongside an honest negative result
+> (disagreement doesn't), and both agree with the active-learning literature.
 
 ---
 
@@ -38,34 +40,33 @@ the teacher model's own guesses.
   | `random` | uniform baseline |
   | `entropy` | highest student prediction entropy (uncertainty) |
   | `disagreement` | highest teacher-student box/confidence disagreement |
-  | `disagreement_div` | disagreement + k-center-greedy diversity |
-  | `entropy_div` | entropy + k-center-greedy diversity |
+  | `hybrid` | entropy + k-center-greedy diversity |
 
 Run on an **ASU SOL A100** node via SLURM (`sol/run_tier1b_v2.sbatch`).
 
 ## Results — mAP50 (mean of 3 seeds, vs human TEST labels)
 
+Mean mAP50 over 3 seeds (42/43/44), evaluated against human COCO TEST labels.
+These numbers come directly from `results/tier1b/tier1b.log` (SOL A100 job 62553117).
+
 | Arm | K=250 | K=500 | K=1000 | vs random |
 |-----|------:|------:|-------:|----------:|
-| **entropy_div** | **0.317** | 0.289 | *(pending)* | **best** |
-| **entropy**     | 0.311 | **0.299** | **0.264** | **+0.06 to +0.07** |
-| random (baseline) | 0.250 | 0.231 | 0.225 | — |
-| disagreement_div  | 0.250 | 0.237 | 0.226 | ~parity |
-| disagreement      | 0.227 | 0.222 | 0.215 | **below random** |
-
-*(Plot: `results/tier1b_v2/tier1b_v2_map50.png` — regenerated when the run finishes.)*
+| **entropy**     | **0.291** | **0.198** | **0.134** | **+0.028 to +0.046** |
+| hybrid (entropy + k-center diversity) | 0.251 | 0.167 | 0.121 | small gain |
+| random (baseline) | 0.244 | 0.159 | 0.106 | — |
+| disagreement      | 0.225 | 0.155 | 0.112 | at/below random |
 
 ![mAP50 by acquisition strategy across labeling budgets](results/tier1b_v2/tier1b_v2_map50.png)
 
 ### Findings
 
-1. **Entropy sampling is the clear winner** — +0.06–0.07 mAP50 over random at
-   every budget, ~10× the seed-to-seed std. Statistically clean positive result.
-2. **Teacher-student disagreement underperforms random.** The project's original
+1. **Entropy sampling wins at every budget** — +0.046 (K=250), +0.040 (K=500),
+   +0.028 (K=1000) mAP50 over random, comfortably above the seed-to-seed std.
+   A clean positive result, though the margin shrinks as the budget grows.
+2. **Teacher-student disagreement does not beat random.** The project's original
    hypothesis does not hold: raw disagreement selects redundant, ambiguous frames.
-3. **Diversity rescues disagreement to parity, not victory.** Adding k-center
-   diversity (`disagreement_div`) moves it from *below* random to *tied* with it —
-   real improvement, but still not a reason to prefer disagreement over entropy.
+3. **Adding diversity (hybrid) helps a little** but does not overtake plain
+   entropy — diversity is worth combining with uncertainty, not with disagreement.
 4. **Practical takeaway:** for this pipeline, use **entropy** to choose what to
    label. Reserve disagreement for *flagging* failures, not *selecting* data.
 

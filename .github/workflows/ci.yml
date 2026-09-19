@@ -19,5 +19,5 @@ jobs:
           pip install --upgrade pip
           pip install -e .
           pip install pytest
-      - name: Run full test suite (66 tests — integrity, leakage, acquisition, prep)
+      - name: Run full test suite (65 tests +1 data-gated skip — integrity, leakage, acquisition, prep)
         run: pytest tests/ -q

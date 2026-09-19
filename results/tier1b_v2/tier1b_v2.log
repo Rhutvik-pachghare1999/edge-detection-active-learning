@@ -1,0 +1,308 @@
+2026-09-04 07:58:27 | INFO     | __main__:main:512 | Using device: cuda
+2026-09-04 07:58:27 | INFO     | __main__:run_experiment:363 | Loaded manifest: TRAIN_POOL=4000, TEST=1000 (subset_4k)
+2026-09-04 07:58:27 | INFO     | __main__:ensure_teacher_cache:135 | Running RT-DETR teacher on TRAIN_POOL
+2026-09-04 07:58:27 | INFO     | aecs_sdc.teacher:_load:34 | Loading teacher model PekingU/rtdetr_r50vd on cuda
+2026-09-04 08:00:26 | INFO     | aecs_sdc.teacher:_load:42 | Teacher model ready
+2026-09-04 08:00:29 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 50/4000 train images
+2026-09-04 08:00:32 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 100/4000 train images
+2026-09-04 08:00:34 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 150/4000 train images
+2026-09-04 08:00:36 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 200/4000 train images
+2026-09-04 08:00:39 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 250/4000 train images
+2026-09-04 08:00:41 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 300/4000 train images
+2026-09-04 08:00:43 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 350/4000 train images
+2026-09-04 08:00:45 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 400/4000 train images
+2026-09-04 08:00:47 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 450/4000 train images
+2026-09-04 08:00:50 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 500/4000 train images
+2026-09-04 08:00:52 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 550/4000 train images
+2026-09-04 08:00:55 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 600/4000 train images
+2026-09-04 08:00:58 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 650/4000 train images
+2026-09-04 08:01:00 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 700/4000 train images
+2026-09-04 08:01:02 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 750/4000 train images
+2026-09-04 08:01:05 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 800/4000 train images
+2026-09-04 08:01:07 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 850/4000 train images
+2026-09-04 08:01:09 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 900/4000 train images
+2026-09-04 08:01:12 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 950/4000 train images
+2026-09-04 08:01:14 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1000/4000 train images
+2026-09-04 08:01:16 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1050/4000 train images
+2026-09-04 08:01:18 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1100/4000 train images
+2026-09-04 08:01:21 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1150/4000 train images
+2026-09-04 08:01:23 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1200/4000 train images
+2026-09-04 08:01:25 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1250/4000 train images
+2026-09-04 08:01:27 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1300/4000 train images
+2026-09-04 08:01:29 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1350/4000 train images
+2026-09-04 08:01:32 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1400/4000 train images
+2026-09-04 08:01:35 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1450/4000 train images
+2026-09-04 08:01:37 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1500/4000 train images
+2026-09-04 08:01:40 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1550/4000 train images
+2026-09-04 08:01:42 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1600/4000 train images
+2026-09-04 08:01:44 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1650/4000 train images
+2026-09-04 08:01:47 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1700/4000 train images
+2026-09-04 08:01:49 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1750/4000 train images
+2026-09-04 08:01:51 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1800/4000 train images
+2026-09-04 08:01:53 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1850/4000 train images
+2026-09-04 08:01:56 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1900/4000 train images
+2026-09-04 08:01:58 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 1950/4000 train images
+2026-09-04 08:02:00 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2000/4000 train images
+2026-09-04 08:02:02 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2050/4000 train images
+2026-09-04 08:02:05 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2100/4000 train images
+2026-09-04 08:02:07 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2150/4000 train images
+2026-09-04 08:02:09 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2200/4000 train images
+2026-09-04 08:02:12 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2250/4000 train images
+2026-09-04 08:02:14 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2300/4000 train images
+2026-09-04 08:02:16 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2350/4000 train images
+2026-09-04 08:02:19 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2400/4000 train images
+2026-09-04 08:02:21 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2450/4000 train images
+2026-09-04 08:02:24 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2500/4000 train images
+2026-09-04 08:02:27 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2550/4000 train images
+2026-09-04 08:02:29 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2600/4000 train images
+2026-09-04 08:02:31 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2650/4000 train images
+2026-09-04 08:02:34 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2700/4000 train images
+2026-09-04 08:02:36 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2750/4000 train images
+2026-09-04 08:02:39 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2800/4000 train images
+2026-09-04 08:02:41 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2850/4000 train images
+2026-09-04 08:02:44 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2900/4000 train images
+2026-09-04 08:02:46 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 2950/4000 train images
+2026-09-04 08:02:48 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3000/4000 train images
+2026-09-04 08:02:51 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3050/4000 train images
+2026-09-04 08:02:53 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3100/4000 train images
+2026-09-04 08:02:56 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3150/4000 train images
+2026-09-04 08:02:58 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3200/4000 train images
+2026-09-04 08:03:00 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3250/4000 train images
+2026-09-04 08:03:03 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3300/4000 train images
+2026-09-04 08:03:05 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3350/4000 train images
+2026-09-04 08:03:07 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3400/4000 train images
+2026-09-04 08:03:09 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3450/4000 train images
+2026-09-04 08:03:12 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3500/4000 train images
+2026-09-04 08:03:14 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3550/4000 train images
+2026-09-04 08:03:17 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3600/4000 train images
+2026-09-04 08:03:19 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3650/4000 train images
+2026-09-04 08:03:21 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3700/4000 train images
+2026-09-04 08:03:24 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3750/4000 train images
+2026-09-04 08:03:26 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3800/4000 train images
+2026-09-04 08:03:28 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3850/4000 train images
+2026-09-04 08:03:30 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3900/4000 train images
+2026-09-04 08:03:32 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 3950/4000 train images
+2026-09-04 08:03:35 | INFO     | __main__:ensure_teacher_cache:151 | Teacher labeled 4000/4000 train images
+2026-09-04 08:03:36 | INFO     | __main__:ensure_teacher_cache:156 | Cached teacher pseudo-labels to /scratch/rpachgha/aecs-sdc/results/tier1b/teacher_pseudo_labels.json
+2026-09-04 08:03:36 | INFO     | __main__:ensure_student_cache:176 | Running YOLOv8n ONNX student on TRAIN_POOL
+2026-09-04 08:03:38 | INFO     | aecs_sdc.student:_load:53 | Loading student model from /scratch/rpachgha/aecs-sdc/models/yolov8n.onnx
+2026-09-04 08:03:38 | INFO     | aecs_sdc.student:_load:57 | Student loaded; providers=['AzureExecutionProvider', 'CPUExecutionProvider']
+2026-09-04 08:04:13 | INFO     | __main__:ensure_student_cache:192 | Student predicted 50/4000 train images
+2026-09-04 08:04:45 | INFO     | __main__:ensure_student_cache:192 | Student predicted 100/4000 train images
+2026-09-04 08:05:18 | INFO     | __main__:ensure_student_cache:192 | Student predicted 150/4000 train images
+2026-09-04 08:05:47 | INFO     | __main__:ensure_student_cache:192 | Student predicted 200/4000 train images
+2026-09-04 08:06:18 | INFO     | __main__:ensure_student_cache:192 | Student predicted 250/4000 train images
+2026-09-04 08:06:54 | INFO     | __main__:ensure_student_cache:192 | Student predicted 300/4000 train images
+2026-09-04 08:07:23 | INFO     | __main__:ensure_student_cache:192 | Student predicted 350/4000 train images
+2026-09-04 08:07:57 | INFO     | __main__:ensure_student_cache:192 | Student predicted 400/4000 train images
+2026-09-04 08:08:31 | INFO     | __main__:ensure_student_cache:192 | Student predicted 450/4000 train images
+2026-09-04 08:09:06 | INFO     | __main__:ensure_student_cache:192 | Student predicted 500/4000 train images
+2026-09-04 08:09:41 | INFO     | __main__:ensure_student_cache:192 | Student predicted 550/4000 train images
+2026-09-04 08:10:14 | INFO     | __main__:ensure_student_cache:192 | Student predicted 600/4000 train images
+2026-09-04 08:10:46 | INFO     | __main__:ensure_student_cache:192 | Student predicted 650/4000 train images
+2026-09-04 08:11:20 | INFO     | __main__:ensure_student_cache:192 | Student predicted 700/4000 train images
+2026-09-04 08:11:51 | INFO     | __main__:ensure_student_cache:192 | Student predicted 750/4000 train images
+2026-09-04 08:12:25 | INFO     | __main__:ensure_student_cache:192 | Student predicted 800/4000 train images
+2026-09-04 08:12:49 | INFO     | __main__:ensure_student_cache:192 | Student predicted 850/4000 train images
+2026-09-04 08:13:23 | INFO     | __main__:ensure_student_cache:192 | Student predicted 900/4000 train images
+2026-09-04 08:13:57 | INFO     | __main__:ensure_student_cache:192 | Student predicted 950/4000 train images
+2026-09-04 08:14:32 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1000/4000 train images
+2026-09-04 08:15:01 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1050/4000 train images
+2026-09-04 08:15:32 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1100/4000 train images
+2026-09-04 08:16:04 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1150/4000 train images
+2026-09-04 08:16:35 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1200/4000 train images
+2026-09-04 08:17:05 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1250/4000 train images
+2026-09-04 08:17:37 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1300/4000 train images
+2026-09-04 08:18:12 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1350/4000 train images
+2026-09-04 08:18:48 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1400/4000 train images
+2026-09-04 08:19:20 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1450/4000 train images
+2026-09-04 08:19:53 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1500/4000 train images
+2026-09-04 08:20:28 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1550/4000 train images
+2026-09-04 08:20:59 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1600/4000 train images
+2026-09-04 08:21:26 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1650/4000 train images
+2026-09-04 08:21:56 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1700/4000 train images
+2026-09-04 08:22:29 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1750/4000 train images
+2026-09-04 08:22:57 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1800/4000 train images
+2026-09-04 08:23:31 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1850/4000 train images
+2026-09-04 08:24:05 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1900/4000 train images
+2026-09-04 08:24:35 | INFO     | __main__:ensure_student_cache:192 | Student predicted 1950/4000 train images
+2026-09-04 08:25:10 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2000/4000 train images
+2026-09-04 08:25:38 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2050/4000 train images
+2026-09-04 08:26:10 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2100/4000 train images
+2026-09-04 08:26:42 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2150/4000 train images
+2026-09-04 08:27:11 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2200/4000 train images
+2026-09-04 08:27:46 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2250/4000 train images
+2026-09-04 08:28:20 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2300/4000 train images
+2026-09-04 08:28:51 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2350/4000 train images
+2026-09-04 08:29:22 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2400/4000 train images
+2026-09-04 08:29:55 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2450/4000 train images
+2026-09-04 08:30:31 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2500/4000 train images
+2026-09-04 08:31:01 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2550/4000 train images
+2026-09-04 08:31:32 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2600/4000 train images
+2026-09-04 08:32:06 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2650/4000 train images
+2026-09-04 08:32:40 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2700/4000 train images
+2026-09-04 08:33:12 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2750/4000 train images
+2026-09-04 08:33:36 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2800/4000 train images
+2026-09-04 08:34:10 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2850/4000 train images
+2026-09-04 08:34:38 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2900/4000 train images
+2026-09-04 08:35:07 | INFO     | __main__:ensure_student_cache:192 | Student predicted 2950/4000 train images
+2026-09-04 08:35:37 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3000/4000 train images
+2026-09-04 08:36:10 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3050/4000 train images
+2026-09-04 08:36:41 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3100/4000 train images
+2026-09-04 08:37:09 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3150/4000 train images
+2026-09-04 08:37:43 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3200/4000 train images
+2026-09-04 08:38:14 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3250/4000 train images
+2026-09-04 08:38:44 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3300/4000 train images
+2026-09-04 08:39:17 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3350/4000 train images
+2026-09-04 08:39:48 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3400/4000 train images
+2026-09-04 08:40:21 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3450/4000 train images
+2026-09-04 08:40:51 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3500/4000 train images
+2026-09-04 08:41:22 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3550/4000 train images
+2026-09-04 08:41:49 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3600/4000 train images
+2026-09-04 08:42:26 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3650/4000 train images
+2026-09-04 08:42:57 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3700/4000 train images
+2026-09-04 08:43:28 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3750/4000 train images
+2026-09-04 08:44:00 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3800/4000 train images
+2026-09-04 08:44:28 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3850/4000 train images
+2026-09-04 08:45:03 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3900/4000 train images
+2026-09-04 08:45:36 | INFO     | __main__:ensure_student_cache:192 | Student predicted 3950/4000 train images
+2026-09-04 08:46:05 | INFO     | __main__:ensure_student_cache:192 | Student predicted 4000/4000 train images
+2026-09-04 08:46:06 | INFO     | __main__:ensure_student_cache:197 | Cached student predictions to /scratch/rpachgha/aecs-sdc/results/tier1b/student_predictions.json
+2026-09-04 08:46:06 | INFO     | __main__:ensure_pool_embeddings:238 | Computing ResNet18 embeddings for TRAIN_POOL
+2026-09-04 08:48:00 | INFO     | __main__:ensure_pool_embeddings:253 | Cached 4000 pool embeddings to /scratch/rpachgha/aecs-sdc/results/tier1b/pool_embeddings.npy
+2026-09-04 08:49:01 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k250_seed42/yolo_random_k250_seed42: train=250, val=1000
+2026-09-04 08:49:07 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k250_seed42/yolo_random_k250_seed42/data.yaml
+2026-09-04 08:52:57 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 08:53:22 | INFO     | __main__:run_experiment:464 | Result random_k250_seed42: mAP50=0.236505 mAP50-95=0.164973
+2026-09-04 08:54:03 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k250_seed43/yolo_random_k250_seed43: train=250, val=1000
+2026-09-04 08:54:03 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k250_seed43/yolo_random_k250_seed43/data.yaml
+2026-09-04 08:58:18 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 08:58:44 | INFO     | __main__:run_experiment:464 | Result random_k250_seed43: mAP50=0.24764 mAP50-95=0.171743
+2026-09-04 08:59:45 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k250_seed44/yolo_random_k250_seed44: train=250, val=1000
+2026-09-04 08:59:45 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k250_seed44/yolo_random_k250_seed44/data.yaml
+2026-09-04 09:02:47 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:03:03 | INFO     | __main__:run_experiment:464 | Result random_k250_seed44: mAP50=0.249282 mAP50-95=0.174331
+2026-09-04 09:03:53 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k250_seed42/yolo_disagreement_k250_seed42: train=250, val=1000
+2026-09-04 09:03:53 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k250_seed42/yolo_disagreement_k250_seed42/data.yaml
+2026-09-04 09:06:51 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:07:06 | INFO     | __main__:run_experiment:464 | Result disagreement_k250_seed42: mAP50=0.221759 mAP50-95=0.152769
+2026-09-04 09:07:36 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k250_seed43/yolo_disagreement_k250_seed43: train=250, val=1000
+2026-09-04 09:07:36 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k250_seed43/yolo_disagreement_k250_seed43/data.yaml
+2026-09-04 09:10:43 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:10:59 | INFO     | __main__:run_experiment:464 | Result disagreement_k250_seed43: mAP50=0.228975 mAP50-95=0.159338
+2026-09-04 09:11:38 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k250_seed44/yolo_disagreement_k250_seed44: train=250, val=1000
+2026-09-04 09:11:38 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k250_seed44/yolo_disagreement_k250_seed44/data.yaml
+2026-09-04 09:14:45 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:15:02 | INFO     | __main__:run_experiment:464 | Result disagreement_k250_seed44: mAP50=0.225183 mAP50-95=0.154317
+2026-09-04 09:16:02 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k250_seed42/yolo_entropy_k250_seed42: train=250, val=1000
+2026-09-04 09:16:02 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k250_seed42/yolo_entropy_k250_seed42/data.yaml
+2026-09-04 09:19:01 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:19:16 | INFO     | __main__:run_experiment:464 | Result entropy_k250_seed42: mAP50=0.293934 mAP50-95=0.207121
+2026-09-04 09:19:53 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k250_seed43/yolo_entropy_k250_seed43: train=250, val=1000
+2026-09-04 09:19:53 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k250_seed43/yolo_entropy_k250_seed43/data.yaml
+2026-09-04 09:22:53 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:23:10 | INFO     | __main__:run_experiment:464 | Result entropy_k250_seed43: mAP50=0.295847 mAP50-95=0.207869
+2026-09-04 09:23:40 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k250_seed44/yolo_entropy_k250_seed44: train=250, val=1000
+2026-09-04 09:23:40 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k250_seed44/yolo_entropy_k250_seed44/data.yaml
+2026-09-04 09:26:33 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:26:48 | INFO     | __main__:run_experiment:464 | Result entropy_k250_seed44: mAP50=0.282968 mAP50-95=0.198411
+2026-09-04 09:31:41 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k250_seed42/yolo_hybrid_k250_seed42: train=250, val=1000
+2026-09-04 09:31:41 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k250_seed42/yolo_hybrid_k250_seed42/data.yaml
+2026-09-04 09:34:44 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:35:00 | INFO     | __main__:run_experiment:464 | Result hybrid_k250_seed42: mAP50=0.244623 mAP50-95=0.168119
+2026-09-04 09:40:02 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k250_seed43/yolo_hybrid_k250_seed43: train=250, val=1000
+2026-09-04 09:40:03 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k250_seed43/yolo_hybrid_k250_seed43/data.yaml
+2026-09-04 09:43:09 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:43:24 | INFO     | __main__:run_experiment:464 | Result hybrid_k250_seed43: mAP50=0.257666 mAP50-95=0.178207
+2026-09-04 09:48:04 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k250_seed44/yolo_hybrid_k250_seed44: train=250, val=1000
+2026-09-04 09:48:04 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k250_seed44/yolo_hybrid_k250_seed44/data.yaml
+2026-09-04 09:51:03 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:51:18 | INFO     | __main__:run_experiment:464 | Result hybrid_k250_seed44: mAP50=0.251299 mAP50-95=0.171682
+2026-09-04 09:51:57 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k500_seed42/yolo_random_k500_seed42: train=500, val=1000
+2026-09-04 09:51:57 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k500_seed42/yolo_random_k500_seed42/data.yaml
+2026-09-04 09:55:58 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 09:56:13 | INFO     | __main__:run_experiment:464 | Result random_k500_seed42: mAP50=0.146406 mAP50-95=0.098939
+2026-09-04 09:56:48 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k500_seed43/yolo_random_k500_seed43: train=500, val=1000
+2026-09-04 09:56:48 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k500_seed43/yolo_random_k500_seed43/data.yaml
+2026-09-04 10:00:55 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:01:10 | INFO     | __main__:run_experiment:464 | Result random_k500_seed43: mAP50=0.168293 mAP50-95=0.115093
+2026-09-04 10:01:57 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k500_seed44/yolo_random_k500_seed44: train=500, val=1000
+2026-09-04 10:01:57 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k500_seed44/yolo_random_k500_seed44/data.yaml
+2026-09-04 10:06:04 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:06:21 | INFO     | __main__:run_experiment:464 | Result random_k500_seed44: mAP50=0.161899 mAP50-95=0.109354
+2026-09-04 10:06:59 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k500_seed42/yolo_disagreement_k500_seed42: train=500, val=1000
+2026-09-04 10:06:59 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k500_seed42/yolo_disagreement_k500_seed42/data.yaml
+2026-09-04 10:11:05 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:11:21 | INFO     | __main__:run_experiment:464 | Result disagreement_k500_seed42: mAP50=0.156236 mAP50-95=0.104622
+2026-09-04 10:12:11 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k500_seed43/yolo_disagreement_k500_seed43: train=500, val=1000
+2026-09-04 10:12:11 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k500_seed43/yolo_disagreement_k500_seed43/data.yaml
+2026-09-04 10:16:34 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:16:51 | INFO     | __main__:run_experiment:464 | Result disagreement_k500_seed43: mAP50=0.160347 mAP50-95=0.110303
+2026-09-04 10:17:29 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k500_seed44/yolo_disagreement_k500_seed44: train=500, val=1000
+2026-09-04 10:17:29 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k500_seed44/yolo_disagreement_k500_seed44/data.yaml
+2026-09-04 10:21:33 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:21:50 | INFO     | __main__:run_experiment:464 | Result disagreement_k500_seed44: mAP50=0.149533 mAP50-95=0.099178
+2026-09-04 10:22:35 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k500_seed42/yolo_entropy_k500_seed42: train=500, val=1000
+2026-09-04 10:22:35 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k500_seed42/yolo_entropy_k500_seed42/data.yaml
+2026-09-04 10:26:41 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:26:57 | INFO     | __main__:run_experiment:464 | Result entropy_k500_seed42: mAP50=0.199425 mAP50-95=0.139239
+2026-09-04 10:27:28 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k500_seed43/yolo_entropy_k500_seed43: train=500, val=1000
+2026-09-04 10:27:28 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k500_seed43/yolo_entropy_k500_seed43/data.yaml
+2026-09-04 10:31:39 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:31:56 | INFO     | __main__:run_experiment:464 | Result entropy_k500_seed43: mAP50=0.199967 mAP50-95=0.138975
+2026-09-04 10:32:26 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k500_seed44/yolo_entropy_k500_seed44: train=500, val=1000
+2026-09-04 10:32:26 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k500_seed44/yolo_entropy_k500_seed44/data.yaml
+2026-09-04 10:36:31 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:36:46 | INFO     | __main__:run_experiment:464 | Result entropy_k500_seed44: mAP50=0.195875 mAP50-95=0.13495
+2026-09-04 10:52:27 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k500_seed42/yolo_hybrid_k500_seed42: train=500, val=1000
+2026-09-04 10:52:27 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k500_seed42/yolo_hybrid_k500_seed42/data.yaml
+2026-09-04 10:56:31 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 10:56:46 | INFO     | __main__:run_experiment:464 | Result hybrid_k500_seed42: mAP50=0.165339 mAP50-95=0.111373
+2026-09-04 11:12:35 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k500_seed43/yolo_hybrid_k500_seed43: train=500, val=1000
+2026-09-04 11:12:35 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k500_seed43/yolo_hybrid_k500_seed43/data.yaml
+2026-09-04 11:16:48 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 11:17:05 | INFO     | __main__:run_experiment:464 | Result hybrid_k500_seed43: mAP50=0.170265 mAP50-95=0.116129
+2026-09-04 11:32:30 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k500_seed44/yolo_hybrid_k500_seed44: train=500, val=1000
+2026-09-04 11:32:30 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k500_seed44/yolo_hybrid_k500_seed44/data.yaml
+2026-09-04 11:36:36 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 11:36:51 | INFO     | __main__:run_experiment:464 | Result hybrid_k500_seed44: mAP50=0.16419 mAP50-95=0.110451
+2026-09-04 11:37:58 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k1000_seed42/yolo_random_k1000_seed42: train=1000, val=1000
+2026-09-04 11:37:58 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k1000_seed42/yolo_random_k1000_seed42/data.yaml
+2026-09-04 11:44:07 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 11:44:23 | INFO     | __main__:run_experiment:464 | Result random_k1000_seed42: mAP50=0.101387 mAP50-95=0.066708
+2026-09-04 11:45:19 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k1000_seed43/yolo_random_k1000_seed43: train=1000, val=1000
+2026-09-04 11:45:19 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k1000_seed43/yolo_random_k1000_seed43/data.yaml
+2026-09-04 11:51:17 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 11:51:39 | INFO     | __main__:run_experiment:464 | Result random_k1000_seed43: mAP50=0.108421 mAP50-95=0.072041
+2026-09-04 11:53:07 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k1000_seed44/yolo_random_k1000_seed44: train=1000, val=1000
+2026-09-04 11:53:07 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/random_k1000_seed44/yolo_random_k1000_seed44/data.yaml
+2026-09-04 11:59:02 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 11:59:16 | INFO     | __main__:run_experiment:464 | Result random_k1000_seed44: mAP50=0.107882 mAP50-95=0.070736
+2026-09-04 12:00:34 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k1000_seed42/yolo_disagreement_k1000_seed42: train=1000, val=1000
+2026-09-04 12:00:34 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k1000_seed42/yolo_disagreement_k1000_seed42/data.yaml
+2026-09-04 12:06:41 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 12:06:56 | INFO     | __main__:run_experiment:464 | Result disagreement_k1000_seed42: mAP50=0.110748 mAP50-95=0.073528
+2026-09-04 12:07:52 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k1000_seed43/yolo_disagreement_k1000_seed43: train=1000, val=1000
+2026-09-04 12:07:52 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k1000_seed43/yolo_disagreement_k1000_seed43/data.yaml
+2026-09-04 12:13:56 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 12:14:11 | INFO     | __main__:run_experiment:464 | Result disagreement_k1000_seed43: mAP50=0.113141 mAP50-95=0.075006
+2026-09-04 12:15:02 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k1000_seed44/yolo_disagreement_k1000_seed44: train=1000, val=1000
+2026-09-04 12:15:02 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/disagreement_k1000_seed44/yolo_disagreement_k1000_seed44/data.yaml
+2026-09-04 12:21:18 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 12:21:36 | INFO     | __main__:run_experiment:464 | Result disagreement_k1000_seed44: mAP50=0.112499 mAP50-95=0.074589
+2026-09-04 12:23:05 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k1000_seed42/yolo_entropy_k1000_seed42: train=1000, val=1000
+2026-09-04 12:23:05 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k1000_seed42/yolo_entropy_k1000_seed42/data.yaml
+2026-09-04 12:29:05 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 12:29:22 | INFO     | __main__:run_experiment:464 | Result entropy_k1000_seed42: mAP50=0.133874 mAP50-95=0.091504
+2026-09-04 12:30:20 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k1000_seed43/yolo_entropy_k1000_seed43: train=1000, val=1000
+2026-09-04 12:30:20 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k1000_seed43/yolo_entropy_k1000_seed43/data.yaml
+2026-09-04 12:36:20 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 12:36:35 | INFO     | __main__:run_experiment:464 | Result entropy_k1000_seed43: mAP50=0.132401 mAP50-95=0.088481
+2026-09-04 12:37:49 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k1000_seed44/yolo_entropy_k1000_seed44: train=1000, val=1000
+2026-09-04 12:37:49 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/entropy_k1000_seed44/yolo_entropy_k1000_seed44/data.yaml
+2026-09-04 12:43:51 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 12:44:07 | INFO     | __main__:run_experiment:464 | Result entropy_k1000_seed44: mAP50=0.134802 mAP50-95=0.089874
+2026-09-04 13:37:43 | INFO     | aecs_sdc.tier1:prepare_yolo_dataset:141 | Prepared YOLO dataset at /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k1000_seed42/yolo_hybrid_k1000_seed42: train=1000, val=1000
+2026-09-04 13:37:43 | INFO     | __main__:train_and_evaluate:277 | Training run train on /scratch/rpachgha/aecs-sdc/results/tier1b/datasets/hybrid_k1000_seed42/yolo_hybrid_k1000_seed42/data.yaml
+2026-09-04 13:43:32 | INFO     | __main__:train_and_evaluate:311 | Evaluating train on held-out human TEST
+2026-09-04 13:43:48 | INFO     | __main__:run_experiment:464 | Result hybrid_k1000_seed42: mAP50=0.120931 mAP50-95=0.080815
