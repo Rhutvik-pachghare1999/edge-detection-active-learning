@@ -55,6 +55,8 @@ Run on an **ASU SOL A100** node via SLURM (`sol/run_tier1b_v2.sbatch`).
 
 *(Plot: `results/tier1b_v2/tier1b_v2_map50.png` — regenerated when the run finishes.)*
 
+![mAP50 by acquisition strategy across labeling budgets](results/tier1b_v2/tier1b_v2_map50.png)
+
 ### Findings
 
 1. **Entropy sampling is the clear winner** — +0.06–0.07 mAP50 over random at
