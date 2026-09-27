@@ -1,6 +1,6 @@
 # EdgeAL: Active Learning for Edge Object Detection
 
-[![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-76%20passed%2C%201%20skipped-brightgreen)](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 
@@ -76,7 +76,7 @@ This aligns with active learning literature: uncertainty sampling helps most whe
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Run tests (77 tests: integrity, leakage, acquisition, dataset prep)
+# 2. Run tests (76 passed, 1 data-gated skip — integrity, leakage, acquisition, prep)
 python -m pytest tests/ -q
 
 # 3. Stage COCO-2017 subset (internet needed once, ~1 GB)
@@ -134,7 +134,7 @@ edge-detection-active-learning/
 ├── configs/
 │   ├── al_benchmark.yaml       # Main benchmark config
 │   └── tier1b_v2.yaml          # Legacy tier1 config
-├── tests/                      # 77 unit/integration tests
+├── tests/                      # 77 tests (76 passed + 1 data-gated skip in CI)
 ├── docs/figures/               # Generated figures (PNG + PDF)
 ├── legacy/                     # Moved legacy code (supervisor, isaac_bridge, etc.)
 ├── data/                       # Staged COCO subsets (gitignored)
