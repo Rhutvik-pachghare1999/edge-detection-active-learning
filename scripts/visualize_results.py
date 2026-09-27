@@ -30,7 +30,7 @@ import seaborn as sns
 
 # Set professional style
 plt.style.use("seaborn-v0_8-whitegrid")
-sns.set_context("paper", font_scale=1.2)
+sns.set_context("paper", font_scale=1.3)
 sns.set_palette("colorblind")
 
 # Color scheme
@@ -88,7 +88,7 @@ def plot_map_vs_budget(
     tracks: Optional[List[str]] = None,
 ):
     """Plot mAP vs budget percentage for each arm."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True)
     
     arms_in_order = [
         "random", "entropy", "max_entropy", "least_confidence", 
@@ -117,7 +117,7 @@ def plot_map_vs_budget(
         sorted_data = sorted(zip(budgets, means, stds))
         budgets, means, stds = zip(*sorted_data)
         
-        # Convert to percentage if needed (assuming total pool ~4000)
+        # Convert to percentage (assuming total pool ~4000)
         budgets_pct = [b / 40 for b in budgets]
         
         color = COLORS.get(arm, "#000000")
@@ -126,18 +126,20 @@ def plot_map_vs_budget(
             label=ARM_LABELS.get(arm, arm),
             color=color,
             marker="o",
-            capsize=4,
-            linewidth=2,
-            markersize=8,
-            alpha=0.8,
+            capsize=5,
+            linewidth=2.5,
+            markersize=9,
+            alpha=0.9,
+            elinewidth=1.5,
         )
     
-    ax.set_xlabel("Annotation Budget (% of Training Pool)", fontsize=14)
-    ax.set_ylabel(f"{metric}" if metric != "mAP50_95" else "mAP@50:95", fontsize=14)
-    ax.set_title(title, fontsize=16, fontweight="bold")
-    ax.legend(loc="lower right", fontsize=11, framealpha=0.9)
+    ax.set_xlabel("Annotation Budget (% of Training Pool)", fontsize=15, labelpad=10)
+    ax.set_ylabel("mAP@50:95" if metric == "mAP50_95" else "mAP@50", fontsize=15, labelpad=10)
+    ax.set_title(title, fontsize=17, fontweight="bold", pad=15)
+    ax.legend(loc="lower right", fontsize=12, framealpha=0.95, frameon=True)
     ax.grid(True, alpha=0.3)
-    ax.set_xlim(0, max(budgets_pct) * 1.1 if budgets_pct else 10)
+    ax.set_xlim(-0.5, max(budgets_pct) * 1.15 if budgets_pct else 10.5)
+    ax.set_ylim(bottom=0)
     
     # Add reference line for random baseline
     random_means = []
@@ -146,11 +148,11 @@ def plot_map_vs_budget(
             random_means.append(val["metrics"][metric]["mean"])
     if random_means:
         ax.axhline(y=np.mean(random_means), color="gray", linestyle="--", 
-                   alpha=0.5, label="Random Baseline")
+                   alpha=0.6, linewidth=1.5, label="Random Baseline (mean)")
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight")
+    ax.legend(loc="lower right", fontsize=11, framealpha=0.95)
+    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close()
     print(f"Saved: {output_path}")
 
@@ -161,14 +163,14 @@ def plot_track_comparison(
     metric: str = "mAP50_95",
 ):
     """Compare Track A vs Track B at each budget."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True)
     
     budgets = [2, 4, 6, 8, 10]
     trackA_arms = ["entropy", "least_confidence", "margin", "disagreement", "hybrid"]
     trackB_arms = ["entropy", "disagreement", "disagreement_div", "entropy_div"]
     
     x = np.arange(len(budgets))
-    width = 0.35
+    width = 0.32
     
     for i, (track, arms, color) in enumerate([
         ("Track A (Human-Label)", trackA_arms, COLORS["trackA"]),
@@ -195,28 +197,30 @@ def plot_track_comparison(
                 track_stds.append(0)
         
         offset = width / 2 if i == 1 else -width / 2
-        ax.bar(
+        bars = ax.bar(
             x + offset, track_means, width,
             yerr=track_stds,
             label=track,
             color=color,
-            alpha=0.7,
-            capsize=4,
+            alpha=0.8,
+            capsize=5,
             edgecolor="black",
-            linewidth=0.5,
+            linewidth=0.8,
+            error_kw={"linewidth": 1.5, "capsize": 5},
         )
     
-    ax.set_xlabel("Annotation Budget (%)", fontsize=14)
-    ax.set_ylabel(f"{metric}" if metric != "mAP50_95" else "mAP@50:95", fontsize=14)
-    ax.set_title(f"Track A vs Track B: {metric} by Budget", fontsize=16, fontweight="bold")
+    ax.set_xlabel("Annotation Budget (%)", fontsize=15, labelpad=10)
+    ax.set_ylabel("mAP@50:95" if metric == "mAP50_95" else "mAP@50", fontsize=15, labelpad=10)
+    ax.set_title(f"Track A vs Track B: {metric.replace('_', '@')} by Budget", fontsize=17, fontweight="bold", pad=15)
     ax.set_xticks(x)
-    ax.set_xticklabels([f"{b}%" for b in budgets])
-    ax.legend(fontsize=12)
+    ax.set_xticklabels([f"{b}%" for b in budgets], fontsize=13)
+    ax.legend(fontsize=13, framealpha=0.95, loc="lower right")
     ax.grid(True, alpha=0.3, axis="y")
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(-0.5, len(budgets) - 0.5)
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close()
     print(f"Saved: {output_path}")
 
@@ -242,7 +246,7 @@ def plot_uncertainty_radar(
     arms = ["entropy", "max_entropy", "least_confidence", "margin", 
             "disagreement", "disagreement_div", "entropy_div"]
     
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=(10, 10), constrained_layout=True, subplot_kw=dict(polar=True))
     
     # Random baseline
     random_val = 0
@@ -271,20 +275,20 @@ def plot_uncertainty_radar(
     values_norm += values_norm[:1]
     angles += angles[:1]
     
-    ax.plot(angles, values_norm, "o-", linewidth=2, color=COLORS["trackA"], alpha=0.8)
-    ax.fill(angles, values_norm, alpha=0.15, color=COLORS["trackA"])
-    ax.axhline(y=0, color="gray", linestyle="--", alpha=0.5)
+    ax.plot(angles, values_norm, "o-", linewidth=2.5, color=COLORS["trackA"], alpha=0.9, markersize=8)
+    ax.fill(angles, values_norm, alpha=0.18, color=COLORS["trackA"])
+    ax.axhline(y=0, color="gray", linestyle="--", alpha=0.5, linewidth=1)
     
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(categories, fontsize=11)
-    ax.set_ylabel("Gain over Random (%)", fontsize=12)
+    ax.set_xticklabels(categories, fontsize=12)
+    ax.set_ylabel("Gain over Random (%)", fontsize=13, labelpad=20)
     ax.set_title(f"Uncertainty Method Comparison at {budget_pct}% Budget", 
-                 fontsize=14, fontweight="bold", pad=20)
+                 fontsize=16, fontweight="bold", pad=25)
     ax.grid(True, alpha=0.3)
+    ax.set_ylim(bottom=min(min(values_norm), -5), top=max(max(values_norm), 5) * 1.2)
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close()
     print(f"Saved: {output_path}")
 
@@ -295,7 +299,7 @@ def plot_seed_variance(
     metric: str = "mAP50_95",
 ):
     """Box plot showing variance across seeds for each arm."""
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(13, 7), constrained_layout=True)
     
     arms_in_order = [
         "random", "entropy", "least_confidence", "margin", 
@@ -331,141 +335,122 @@ def plot_seed_variance(
         patch_artist=True,
         showmeans=True,
         meanline=True,
-        meanprops=dict(color="red", linewidth=2),
+        meanprops=dict(color="red", linewidth=2.5),
         medianprops=dict(color="black", linewidth=2),
+        widths=0.6,
+        showcaps=True,
+        flierprops=dict(marker="o", markersize=4, alpha=0.6),
     )
     
     # Color boxes
     for patch, arm in zip(bp["boxes"], [a for a in arms_in_order if a in ARM_LABELS]):
         patch.set_facecolor(COLORS.get(arm, "#cccccc"))
-        patch.set_alpha(0.7)
+        patch.set_alpha(0.75)
+        patch.set_edgecolor("black")
+        patch.set_linewidth(1.2)
     
-    ax.set_ylabel(f"{metric}" if metric != "mAP50_95" else "mAP@50:95", fontsize=14)
-    ax.set_title(f"Seed Variance Analysis (10% Budget, 5 Seeds)", fontsize=16, fontweight="bold")
+    for median in bp["medians"]:
+        median.set_color("black")
+        median.set_linewidth(2)
+    
+    ax.set_ylabel("mAP@50:95" if metric == "mAP50_95" else "mAP@50", fontsize=15, labelpad=10)
+    ax.set_title(f"Seed Variance Analysis (10% Budget, 5 Seeds)", fontsize=17, fontweight="bold", pad=15)
     ax.grid(True, alpha=0.3, axis="y")
-    plt.xticks(rotation=15, ha="right")
+    ax.set_ylim(bottom=0)
+    plt.xticks(rotation=12, ha="right", fontsize=12)
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight")
-    plt.close()
-    print(f"Saved: {output_path}")
-
-
-def plot_per_class_ap(
-    results_dir: Path,
-    output_path: Path,
-):
-    """Plot per-class AP for best performing arm vs random."""
-    # This would need detailed COCO evaluation results
-    # For now, create a placeholder with the structure
-    fig, ax = plt.subplots(figsize=(12, 5))
-    
-    categories = COCO_NAMES[:20]  # First 20 for visibility
-    x = np.arange(len(categories))
-    width = 0.35
-    
-    # Placeholder data - in real use, load from COCO eval
-    random_ap = np.random.uniform(0.1, 0.4, len(categories))
-    best_ap = random_ap + np.random.uniform(0.05, 0.15, len(categories))
-    best_ap = np.clip(best_ap, 0, 1)
-    
-    ax.bar(x - width/2, random_ap, width, label="Random", 
-           color=COLORS["random"], alpha=0.7, edgecolor="black")
-    ax.bar(x + width/2, best_ap, width, label="Best AL Method",
-           color=COLORS["disagreement"], alpha=0.7, edgecolor="black")
-    
-    ax.set_xlabel("COCO Class", fontsize=12)
-    ax.set_ylabel("AP@50:95", fontsize=12)
-    ax.set_title("Per-Class AP: Best AL Method vs Random (10% Budget)", fontsize=14, fontweight="bold")
-    ax.set_xticks(x)
-    ax.set_xticklabels(categories, rotation=45, ha="right", fontsize=10)
-    ax.legend(fontsize=11)
-    ax.grid(True, alpha=0.3, axis="y")
-    
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close()
     print(f"Saved: {output_path}")
 
 
 def plot_active_learning_pipeline(output_path: Path):
     """Create a professional pipeline diagram for the active learning workflow."""
-    fig, ax = plt.subplots(figsize=(14, 8))
-    ax.set_xlim(0, 14)
-    ax.set_ylim(0, 10)
+    fig, ax = plt.subplots(figsize=(16, 10), constrained_layout=True)
+    ax.set_xlim(0, 16)
+    ax.set_ylim(0, 11)
     ax.axis("off")
     
-    # Define boxes
+    # Define boxes with more spacing
     boxes = [
-        # (x, y, width, height, label, color)
-        (0.5, 6, 3, 2, "Unlabeled\nPool (TRAIN_POOL)\nN images", "#e8f4fd"),
-        (0.5, 2, 3, 2, "Held-out\nTEST Set\nHuman Labels", "#ffe8e8"),
-        (4.5, 6, 3, 2, "Student Model\n(YOLOv8n ONNX)\nUncertainty Signals", "#fff3e0"),
-        (4.5, 2, 3, 2, "Teacher Model\n(RT-DETR)\nPseudo-Labels", "#f3e5f5"),
-        (8.5, 4, 3, 2, "Acquisition\nFunction\n(Uncertainty/Diversity)", "#e8f5e9"),
-        (12, 4, 3, 2, "Selected\nSubset (K images)", "#fff8e1"),
+        (0.8, 7, 3.2, 2.2, "Unlabeled\nPool (TRAIN_POOL)\n4,000 COCO images", "#e8f4fd"),
+        (0.8, 2.5, 3.2, 2.2, "Held-out\nTEST Set\n1,000 images\nHuman Labels", "#ffe8e8"),
+        (5.2, 7, 3.2, 2.2, "Student Model\n(YOLOv8n ONNX)\nUncertainty Signals", "#fff3e0"),
+        (5.2, 2.5, 3.2, 2.2, "Teacher Model\n(RT-DETR)\nPseudo-Labels", "#f3e5f5"),
+        (10.2, 4.5, 3.2, 2.2, "Acquisition\nFunction\n(Uncertainty/Diversity)", "#e8f5e9"),
+        (13.8, 4.5, 3.2, 2.2, "Selected\nSubset (K images)", "#fff8e1"),
     ]
     
     # Draw boxes
     for x, y, w, h, label, color in boxes:
         rect = mpatches.FancyBboxPatch(
             (x, y), w, h,
-            boxstyle="round,pad=0.1",
+            boxstyle="round,pad=0.15",
             facecolor=color,
             edgecolor="black",
-            linewidth=1.5,
+            linewidth=1.8,
         )
         ax.add_patch(rect)
-        ax.text(x + w/2, y + h/2, label, ha="center", va="center", fontsize=11, fontweight="bold")
+        ax.text(x + w/2, y + h/2, label, ha="center", va="center", fontsize=12, fontweight="bold")
     
-    # Draw arrows
+    # Draw arrows with proper spacing
     arrows = [
-        # (start_x, start_y, end_x, end_y, label)
-        (3.5, 7, 4.5, 7, "inference"),
-        (3.5, 3, 4.5, 3, "inference"),
-        (7.5, 7, 8.5, 5.5, "entropy, margin,\nleast-conf, etc."),
-        (7.5, 3, 8.5, 4.5, "disagreement"),
-        (11.5, 4, 12, 4, "top-K"),
+        (4.0, 8.1, 5.2, 8.1, "inference"),
+        (4.0, 3.6, 5.2, 3.6, "inference"),
+        (8.4, 8.1, 10.2, 5.6, "entropy, margin,\nleast-conf, etc."),
+        (8.4, 3.6, 10.2, 5.6, "disagreement"),
+        (13.4, 5.6, 13.8, 5.6, "top-K"),
     ]
     
     for sx, sy, ex, ey, label in arrows:
         ax.annotate("",
             xy=(ex, ey), xytext=(sx, sy),
-            arrowprops=dict(arrowstyle="->", lw=2, color="black"),
+            arrowprops=dict(arrowstyle="->", lw=2.5, color="black", shrinkA=5, shrinkB=5),
         )
         mx, my = (sx + ex) / 2, (sy + ey) / 2
-        ax.text(mx, my + 0.2, label, ha="center", va="bottom", fontsize=9, color="gray")
+        ax.text(mx, my + 0.35, label, ha="center", va="bottom", fontsize=10, color="gray", fontweight="bold")
     
     # Track labels
-    ax.text(2, 8.5, "Track A: Human-Label Active Learning", fontsize=14, fontweight="bold", color=COLORS["trackA"])
-    ax.text(2, 1.5, "Track B: Pseudo-Label Data Engine", fontsize=14, fontweight="bold", color=COLORS["trackB"])
+    ax.text(2.4, 9.8, "Track A: Human-Label Active Learning", fontsize=15, fontweight="bold", color=COLORS["trackA"])
+    ax.text(2.4, 1.0, "Track B: Pseudo-Label Data Engine", fontsize=15, fontweight="bold", color=COLORS["trackB"])
     
     # Dashed line separating tracks
-    ax.axhline(y=5, color="gray", linestyle="--", alpha=0.5, linewidth=1)
+    ax.axhline(y=5.5, color="gray", linestyle="--", alpha=0.5, linewidth=1.2)
     
-    # Training & Evaluation
-    ax.text(8.5, 1.5, "Training\n(YOLOv8n fine-tune)", fontsize=12, fontweight="bold", ha="center",
-            bbox=dict(boxstyle="round,pad=0.5", facecolor="#fce4ec", edgecolor="black"))
-    ax.text(12, 1.5, "Evaluation\n(mAP@50:95 on TEST)", fontsize=12, fontweight="bold", ha="center",
-            bbox=dict(boxstyle="round,pad=0.5", facecolor="#e8eaf6", edgecolor="black"))
+    # Training & Evaluation boxes
+    train_box = mpatches.FancyBboxPatch(
+        (10.2, 1.0), 3.2, 1.8,
+        boxstyle="round,pad=0.15",
+        facecolor="#fce4ec", edgecolor="black", linewidth=1.5,
+    )
+    ax.add_patch(train_box)
+    ax.text(11.8, 1.9, "Training\n(YOLOv8n fine-tune)", fontsize=13, fontweight="bold", ha="center",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.9))
     
-    # Arrow from selected to training
+    eval_box = mpatches.FancyBboxPatch(
+        (13.8, 1.0), 3.2, 1.8,
+        boxstyle="round,pad=0.15",
+        facecolor="#e8eaf6", edgecolor="black", linewidth=1.5,
+    )
+    ax.add_patch(eval_box)
+    ax.text(15.4, 1.9, "Evaluation\n(mAP@50:95 on TEST)", fontsize=13, fontweight="bold", ha="center",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.9))
+    
+    # Arrows
     ax.annotate("",
-        xy=(11, 1.5), xytext=(11.5, 3.2),
-        arrowprops=dict(arrowstyle="->", lw=2, color="black"),
+        xy=(11.8, 1.0), xytext=(11.8, 3.5),
+        arrowprops=dict(arrowstyle="->", lw=2.5, color="black", shrinkA=5, shrinkB=5),
     )
     ax.annotate("",
-        xy=(13.5, 1.5), xytext=(13.5, 1.5),
-        arrowprops=dict(arrowstyle="->", lw=2, color="black"),
+        xy=(15.4, 1.0), xytext=(15.4, 1.0),
+        arrowprops=dict(arrowstyle="->", lw=2.5, color="black"),
     )
     
-    ax.set_title("EdgeAL Active Learning Pipeline", fontsize=18, fontweight="bold", pad=20)
+    ax.set_title("EdgeAL Active Learning Pipeline", fontsize=20, fontweight="bold", pad=25)
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white", pad_inches=0.5)
+    plt.savefig(output_path.with_suffix(".pdf"), bbox_inches="tight", facecolor="white", pad_inches=0.5)
     plt.close()
     print(f"Saved: {output_path}")
 
@@ -580,23 +565,6 @@ def main():
     print("Generated files:")
     for f in sorted(output_dir.glob("*")):
         print(f"  {f.name}")
-
-
-# COCO class names for reference
-COCO_NAMES = [
-    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck",
-    "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
-    "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra",
-    "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-    "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove",
-    "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup",
-    "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange",
-    "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse",
-    "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink",
-    "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier",
-    "toothbrush",
-]
 
 
 if __name__ == "__main__":
