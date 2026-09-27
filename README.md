@@ -195,14 +195,30 @@ edge-detection-active-learning/
 
 ## Generated figures
 
-| Figure | Description |
-|--------|-------------|
-| `map_vs_budget_mAP50_95.png` | mAP@50:95 vs annotation budget with error bars |
-| `map_vs_budget_mAP50.png` | mAP@50 vs annotation budget |
-| `track_comparison_mAP50_95.png` | Track A vs Track B comparison (when both run) |
-| `uncertainty_radar_mAP50_95_10pct.png` | Uncertainty signal comparison radar chart |
-| `al_pipeline.png` | Pipeline architecture diagram |
-| `results_table_mAP50_95.md/csv/tex` | Publication-ready results tables |
+### mAP vs Budget (Track A)
+
+| mAP@50:95 | mAP@50 |
+|-----------|--------|
+| ![mAP@50:95 vs Budget](docs/figures/map_vs_budget_mAP50_95.png) | ![mAP@50 vs Budget](docs/figures/map_vs_budget_mAP50.png) |
+
+### Track Comparison (when both tracks run)
+
+![Track Comparison](docs/figures/track_comparison_mAP50_95.png)
+
+### Uncertainty Signal Radar Chart (10% Budget)
+
+![Uncertainty Radar](docs/figures/uncertainty_radar_mAP50_95_10pct.png)
+
+### Pipeline Architecture
+
+![Pipeline](docs/figures/al_pipeline.png)
+
+### Results Tables
+
+| Metric | Markdown | CSV | LaTeX |
+|--------|----------|-----|-------|
+| mAP@50:95 | [results_table_mAP50_95.md](docs/figures/results_table_mAP50_95.md) | [results_table_mAP50_95.csv](docs/figures/results_table_mAP50_95.csv) | [results_table_mAP50_95.tex](docs/figures/results_table_mAP50_95.tex) |
+| mAP@50 | [results_table_mAP50.md](docs/figures/results_table_mAP50.md) | [results_table_mAP50.csv](docs/figures/results_table_mAP50.csv) | [results_table_mAP50.tex](docs/figures/results_table_mAP50.tex) |
 
 ---
 
