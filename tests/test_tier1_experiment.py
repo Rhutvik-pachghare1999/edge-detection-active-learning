@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from aecs_sdc import tier1
+from edgeal import tier1
 
 
 def test_load_manifest():

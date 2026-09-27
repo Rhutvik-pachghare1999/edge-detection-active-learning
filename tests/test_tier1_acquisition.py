@@ -3,15 +3,22 @@
 import numpy as np
 import pytest
 
-from aecs_sdc.acquisition import (
+from edgeal.acquisition import (
     check_separation,
     disagreement_score,
     entropy_score,
+    image_entropy_score,
+    image_max_entropy_score,
+    image_least_confidence_score,
+    image_max_least_confidence_score,
+    image_margin_score,
+    image_min_margin_score,
     hybrid_selection,
     select_random_k,
     select_subset,
     select_top_k,
 )
+from edgeal.student import _instance_uncertainties
 
 
 def _det(label, cx=0.5, cy=0.5, bw=0.2, bh=0.2, score=0.9):
@@ -33,6 +40,24 @@ def _student_result(detections, top_confidence=0.9, top_class_id=0, entropy=0.0)
         "top_class_id": top_class_id,
         "entropy": entropy,
     }
+
+
+def _student_result_with_image_unc(detections, top_confidence=0.9, top_class_id=0, entropy=0.0,
+                                   mean_entropy=0.5, max_entropy=0.8,
+                                   mean_least_confidence=0.4, max_least_confidence=0.7,
+                                   mean_margin=0.2, min_margin=0.1, detection_count=2):
+    """Student result with full image_uncertainty dict for testing new modes."""
+    base = _student_result(detections, top_confidence, top_class_id, entropy)
+    base["image_uncertainty"] = {
+        "mean_entropy": mean_entropy,
+        "max_entropy": max_entropy,
+        "mean_least_confidence": mean_least_confidence,
+        "max_least_confidence": max_least_confidence,
+        "mean_margin": mean_margin,
+        "min_margin": min_margin,
+        "detection_count": detection_count,
+    }
+    return base
 
 
 def test_select_top_k_returns_exactly_k_and_sorted():
@@ -250,3 +275,138 @@ def test_select_subset_hybrid_with_embeddings_runs():
     )
     assert len(selected) == 2
     assert set(selected).issubset(set(train_ids))
+
+
+# New tests for image-level uncertainty acquisition functions
+
+def test_instance_uncertainties_high_entropy():
+    """Test instance uncertainty for uniform class distribution (high entropy)."""
+    # Uniform distribution: all classes have p=0.5 (sigmoid output)
+    class_scores = np.full(80, 0.5, dtype=np.float32)
+    unc = _instance_uncertainties(class_scores)
+    # Max binary entropy per class is log(2) ~ 0.693, so max total = 80 * log(2)
+    max_entropy = 80 * np.log(2)
+    assert unc["entropy"] == pytest.approx(1.0, abs=1e-6)  # normalized
+    assert unc["least_confidence"] == pytest.approx(0.5, abs=1e-6)
+    assert unc["margin"] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_instance_uncertainties_low_entropy():
+    """Test instance uncertainty for confident prediction (low entropy)."""
+    # One class has high confidence, rest near 0
+    class_scores = np.full(80, 0.01, dtype=np.float32)
+    class_scores[0] = 0.95
+    unc = _instance_uncertainties(class_scores)
+    assert unc["entropy"] < 0.1  # very low entropy
+    assert unc["least_confidence"] == pytest.approx(0.05, abs=1e-2)
+    assert unc["margin"] > 0.9  # large margin
+
+
+def test_image_entropy_score_uses_image_uncertainty():
+    """Test image_entropy_score reads from image_uncertainty dict."""
+    student = _student_result_with_image_unc([], mean_entropy=0.6, max_entropy=0.9)
+    assert image_entropy_score(student) == pytest.approx(0.6)
+    assert image_max_entropy_score(student) == pytest.approx(0.9)
+
+
+def test_image_least_confidence_score():
+    """Test least_confidence acquisition modes."""
+    student = _student_result_with_image_unc(
+        [], mean_least_confidence=0.4, max_least_confidence=0.8
+    )
+    assert image_least_confidence_score(student) == pytest.approx(0.4)
+    assert image_max_least_confidence_score(student) == pytest.approx(0.8)
+
+
+def test_image_margin_score():
+    """Test margin acquisition modes (inverted: lower margin = higher uncertainty)."""
+    student = _student_result_with_image_unc(
+        [], mean_margin=0.2, min_margin=0.05
+    )
+    # margin score = 1 - mean_margin = 0.8 (high uncertainty)
+    assert image_margin_score(student) == pytest.approx(0.8)
+    # min_margin score = 1 - min_margin = 0.95 (very high uncertainty)
+    assert image_min_margin_score(student) == pytest.approx(0.95)
+
+
+def test_score_frames_new_modes():
+    """Test all new acquisition modes in score_frames."""
+    train_ids = ["1", "2"]
+    teacher = {im: _teacher_result([]) for im in train_ids}
+    student = {
+        "1": _student_result_with_image_unc(
+            [], mean_entropy=0.3, max_entropy=0.5,
+            mean_least_confidence=0.2, max_least_confidence=0.6,
+            mean_margin=0.1, min_margin=0.05
+        ),
+        "2": _student_result_with_image_unc(
+            [], mean_entropy=0.7, max_entropy=0.9,
+            mean_least_confidence=0.5, max_least_confidence=0.8,
+            mean_margin=0.3, min_margin=0.1
+        ),
+    }
+    
+    # Test all new modes
+    # Note: margin score = 1 - mean_margin, so LOWER mean_margin = HIGHER score = MORE uncertain
+    # Image "1": mean_margin=0.1 -> score=0.9 (high uncertainty)
+    # Image "2": mean_margin=0.3 -> score=0.7 (lower uncertainty)
+    # So "1" should be selected first for margin mode
+    modes_and_expected = [
+        ("image_entropy", ["2", "1"]),
+        ("image_max_entropy", ["2", "1"]),
+        ("least_confidence", ["2", "1"]),
+        ("max_least_confidence", ["2", "1"]),
+        ("margin", ["1", "2"]),  # 1 - mean_margin: "1" has 0.9, "2" has 0.7
+        ("min_margin", ["1", "2"]),  # 1 - min_margin: "1" has 0.95, "2" has 0.9
+    ]
+    
+    for mode, expected in modes_and_expected:
+        scores = select_subset(
+            mode=mode,
+            train_ids=train_ids,
+            teacher_results=teacher,
+            student_results=student,
+            k=2,
+            seed=0,
+        )
+        assert scores == expected, f"Mode {mode} failed: got {scores}"
+
+
+def test_select_subset_new_modes():
+    """Test select_subset with all new uncertainty modes."""
+    train_ids = ["1", "2", "3", "4"]
+    teacher = {im: _teacher_result([]) for im in train_ids}
+    student = {
+        "1": _student_result_with_image_unc([], mean_entropy=0.1),
+        "2": _student_result_with_image_unc([], mean_entropy=0.4),
+        "3": _student_result_with_image_unc([], mean_entropy=0.2),
+        "4": _student_result_with_image_unc([], mean_entropy=0.9),
+    }
+    
+    # image_entropy should pick highest mean_entropy
+    selected = select_subset(
+        mode="image_entropy",
+        train_ids=train_ids,
+        teacher_results=teacher,
+        student_results=student,
+        k=2,
+        seed=0,
+    )
+    assert selected == ["4", "2"]
+    
+    # least_confidence should pick highest mean_least_confidence
+    student_lc = {
+        "1": _student_result_with_image_unc([], mean_least_confidence=0.1),
+        "2": _student_result_with_image_unc([], mean_least_confidence=0.5),
+        "3": _student_result_with_image_unc([], mean_least_confidence=0.2),
+        "4": _student_result_with_image_unc([], mean_least_confidence=0.8),
+    }
+    selected = select_subset(
+        mode="least_confidence",
+        train_ids=train_ids,
+        teacher_results=teacher,
+        student_results=student_lc,
+        k=2,
+        seed=0,
+    )
+    assert selected == ["4", "2"]

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from aecs_sdc.dataset import build_subset, load_subset, read_yolo_labels
+from edgeal.dataset import build_subset, load_subset, read_yolo_labels
 
 
 def test_committed_subset_exists_and_is_non_empty():
@@ -37,7 +37,7 @@ def test_read_yolo_labels_missing_file_returns_empty():
 
 
 def test_read_yolo_labels_remaps_class_ids():
-    from aecs_sdc.label_map import LabelMap
+    from edgeal.label_map import LabelMap
     lm = LabelMap(mapping={0: 1}, unknown_id=-1, valid_range=[0, 79])
     import tempfile
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:

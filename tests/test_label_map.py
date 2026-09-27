@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from aecs_sdc.label_map import LabelMap
+from edgeal.label_map import LabelMap
 
 
 def test_identity_mapping():

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from aecs_sdc.config import BenchmarkConfig, Config
-from aecs_sdc.evaluator import Evaluator
+from edgeal.config import BenchmarkConfig, Config
+from edgeal.evaluator import Evaluator
 
 
 def _record(combined, harvested, agreement=None, **kwargs):

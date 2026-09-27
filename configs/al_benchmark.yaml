@@ -1,0 +1,28 @@
+# EdgeAL Active Learning Benchmark Configuration
+# This config drives the active learning benchmark with Track A (human-label) and Track B (pseudo-label)
+
+experiment:
+  name: edgeal_benchmark
+  subset_name: subset_4k  # 4000 TRAIN_POOL + 1000 TEST
+  epochs: 15
+  imgsz: 640
+  batch: 16
+
+teacher:
+  model: PekingU/rtdetr_r50vd
+  conf_threshold: 0.30
+  train_label_conf: 0.50  # Confidence floor for pseudo-labels (Track B)
+
+student:
+  model: models/yolov8n.onnx
+  conf_threshold: 0.25
+  image_size: [640, 640]
+
+hybrid:
+  uncertainty_mode: entropy
+  diversity_weight: 0.5
+
+logging:
+  level: INFO
+  file: al_benchmark.log
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"

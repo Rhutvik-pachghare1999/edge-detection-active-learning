@@ -23,9 +23,9 @@ from loguru import logger
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from aecs_sdc.config import Config
-from aecs_sdc.logging_config import configure_logging
-from aecs_sdc.student import StudentModel
+from edgeal.config import Config
+from edgeal.logging_config import configure_logging
+from edgeal.student import StudentModel
 
 
 def benchmark(model_path: str, input_size: tuple, runs: int = 100, warmup: int = 10):

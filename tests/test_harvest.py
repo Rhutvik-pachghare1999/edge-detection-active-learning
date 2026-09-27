@@ -2,8 +2,8 @@
 
 import pytest
 
-from aecs_sdc.config import HarvestConfig
-from aecs_sdc.harvest import (
+from edgeal.config import HarvestConfig
+from edgeal.harvest import (
     BudgetPolicy,
     DiversityPolicy,
     ThresholdPolicy,

@@ -50,13 +50,13 @@ from PIL import Image
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from aecs_sdc.acquisition import check_separation, select_subset, select_top_k
-from aecs_sdc.coco_label_map import NUM_COCO_CLASSES, remap_class_id
-from aecs_sdc.embeddings import ImageFeatureExtractor, ensure_embeddings_cache
-from aecs_sdc.logging_config import configure_logging
-from aecs_sdc.student import StudentModel
-from aecs_sdc.teacher import TeacherModel
-from aecs_sdc.tier1 import (
+from edgeal.acquisition import check_separation, select_subset, select_top_k
+from edgeal.coco_label_map import NUM_COCO_CLASSES, remap_class_id
+from edgeal.embeddings import ImageFeatureExtractor, ensure_embeddings_cache
+from edgeal.logging_config import configure_logging
+from edgeal.student import StudentModel
+from edgeal.teacher import TeacherModel
+from edgeal.tier1 import (
     COCO_NAMES,
     aggregate_results,
     load_manifest,
@@ -299,6 +299,8 @@ def train_and_evaluate(
     is the held-out human TEST set. Selecting on TEST would leak it into model
     selection and invalidate the honest evaluation. A fixed leak-free schedule
     trained to convergence is the correct choice here.
+    
+    Note: save=True is required to get the checkpoint weights for evaluation.
     """
     try:
         from ultralytics import YOLO
@@ -326,7 +328,7 @@ def train_and_evaluate(
             exist_ok=True,
             verbose=False,
             plots=False,
-            save=False,
+            save=True,  # Fixed: must save checkpoints to evaluate
             workers=0,
             deterministic=True,
             seed=seed,
@@ -335,16 +337,15 @@ def train_and_evaluate(
         logger.error(f"Training failed for {run_name}: {e}")
         return None
 
-    best = output_dir / "runs" / run_name / "weights" / "best.pt"
-    if not best.exists():
-        best = output_dir / "runs" / run_name / "weights" / "last.pt"
-    if not best.exists():
-        logger.error(f"No trained weights found for {run_name}")
+    # Use last.pt for leak-free evaluation (not best.pt which is selected on val)
+    last = output_dir / "runs" / run_name / "weights" / "last.pt"
+    if not last.exists():
+        logger.error(f"No trained weights (last.pt) found for {run_name}")
         return None
 
-    logger.info(f"Evaluating {run_name} on held-out human TEST")
+    logger.info(f"Evaluating {run_name} on held-out human TEST using last.pt")
     try:
-        val_model = YOLO(str(best))
+        val_model = YOLO(str(last))
         metrics = val_model.val(
             data=str(data_yaml),
             split="val",

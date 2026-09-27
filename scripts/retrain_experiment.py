@@ -31,13 +31,13 @@ from loguru import logger
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from aecs_sdc.config import Config
-from aecs_sdc.dataset import iter_samples, load_subset
-from aecs_sdc.disagreement import compute_disagreement
-from aecs_sdc.harvest import build_policy
-from aecs_sdc.label_map import LabelMap
-from aecs_sdc.logging_config import configure_logging
-from aecs_sdc.retrain import (
+from edgeal.config import Config
+from edgeal.dataset import iter_samples, load_subset
+from edgeal.disagreement import compute_disagreement
+from edgeal.harvest import build_policy
+from edgeal.label_map import LabelMap
+from edgeal.logging_config import configure_logging
+from edgeal.retrain import (
     COCO_NAMES,
     create_yolo_split,
     evaluate_yolo_model,
@@ -45,8 +45,8 @@ from aecs_sdc.retrain import (
     train_yolo_model,
     write_data_yaml,
 )
-from aecs_sdc.student import StudentModel
-from aecs_sdc.teacher import TeacherModel
+from edgeal.student import StudentModel
+from edgeal.teacher import TeacherModel
 
 
 def set_seed(seed: int) -> None:

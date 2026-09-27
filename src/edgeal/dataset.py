@@ -37,7 +37,7 @@ class Sample:
 
 def read_yolo_labels(label_path: str, label_map=None) -> List[Label]:
     """Read a YOLO-format label file and optionally remap class IDs."""
-    from aecs_sdc.label_map import LabelMap
+    from edgeal.label_map import LabelMap
 
     labels = []
     path = Path(label_path)
@@ -138,7 +138,7 @@ def iter_samples(
     label_map=None,
 ) -> Iterator[Sample]:
     """Yield benchmark samples for each clip in the subset."""
-    from aecs_sdc.label_map import LabelMap
+    from edgeal.label_map import LabelMap
 
     if label_map is None:
         label_map = LabelMap()

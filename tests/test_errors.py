@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from aecs_sdc.config import Config
-from aecs_sdc.dataset import load_subset
+from edgeal.config import Config
+from edgeal.dataset import load_subset
 
 
 def test_config_missing_file_raises():

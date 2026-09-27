@@ -32,15 +32,15 @@ from loguru import logger
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from aecs_sdc.config import Config
-from aecs_sdc.dataset import build_subset, iter_samples, load_subset
-from aecs_sdc.disagreement import compute_disagreement, compute_student_teacher_agreement
-from aecs_sdc.evaluator import Evaluator
-from aecs_sdc.harvest import build_policy
-from aecs_sdc.label_map import LabelMap
-from aecs_sdc.logging_config import configure_logging
-from aecs_sdc.student import StudentModel
-from aecs_sdc.teacher import TeacherModel
+from edgeal.config import Config
+from edgeal.dataset import build_subset, iter_samples, load_subset
+from edgeal.disagreement import compute_disagreement, compute_student_teacher_agreement
+from edgeal.evaluator import Evaluator
+from edgeal.harvest import build_policy
+from edgeal.label_map import LabelMap
+from edgeal.logging_config import configure_logging
+from edgeal.student import StudentModel
+from edgeal.teacher import TeacherModel
 
 
 def set_seed(seed: int) -> None:

@@ -27,7 +27,7 @@ from typing import Dict, List, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from aecs_sdc.coco_label_map import CAT_ID_TO_YOLO_IDX, COCO_CAT_IDS, YOLO_IDX_TO_NAME
+from edgeal.coco_label_map import CAT_ID_TO_YOLO_IDX, COCO_CAT_IDS, YOLO_IDX_TO_NAME
 
 DATASET_URLS = {
     "images": "http://images.cocodataset.org/zips/val2017.zip",

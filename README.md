@@ -1,155 +1,230 @@
-# Edge Detection Active Learning — An Honest Benchmark for Label-Efficient Object Detection
+# EdgeAL: Active Learning for Edge Object Detection
 
-[![CI](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml)
-![tests](https://img.shields.io/badge/tests-65%20passing-brightgreen)
-![license](https://img.shields.io/badge/license-MIT-blue)
-
-
-**One-line problem:** Labeling data is the bottleneck when you retrain a small
-object detector for the edge. Given a large unlabeled image pool and a tiny
-labeling budget, *which images should you label to improve the model the most?*
-
-This repo answers that question with a **rigorous, leakage-free benchmark** on
-COCO-2017, comparing five data-selection ("acquisition") strategies. Every
-number below is measured against **held-out human COCO labels**, never against
-the teacher model's own guesses.
-
-> **TL;DR finding:** Prediction-**entropy** sampling beats random selection at every budget tested by
-> **+0.039 to +0.061 mAP50** (margin largest at small budgets). The intuitive
-> **teacher-student disagreement** signal — the original hypothesis of this
-> project — **does not beat random**. Combining entropy with k-center diversity
-> (`entropy_div`) is the best arm at K=250 (0.317) but does not decisively beat
-> plain entropy overall. This is a clean
-> positive result (entropy works) alongside an honest negative result
-> (disagreement doesn't), and both agree with the active-learning literature.
+[![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)](https://github.com/Rhutvik-pachghare1999/edge-detection-active-learning/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 
 ---
 
-## The experiment
+## What this is
 
-- **Pool / test split:** 4,000 COCO-2017 images to select from; **1,000 held-out
-  images with human labels** used only for final evaluation. Splits are disjoint
-  (verified in tests and on disk — no leakage).
-- **Teacher:** RT-DETR (`PekingU/rtdetr_r50vd`) auto-labels the pool.
-- **Student:** YOLOv8n, fine-tuned on the teacher's pseudo-labels for the K
-  selected images, then evaluated on the human TEST set.
-- **Budgets:** K ∈ {250, 500, 1000}, each over **3 seeds** (42/43/44).
-- **Arms:**
-  | arm | how it picks K images |
-  |-----|-----------------------|
-  | `random` | uniform baseline |
-  | `entropy` | highest student prediction entropy (uncertainty) |
-  | `disagreement` | highest teacher-student box/confidence disagreement |
-  | `disagreement_div` | disagreement + k-center-greedy diversity |
-  | `entropy_div` | entropy + k-center-greedy diversity |
+A rigorous, leakage-free benchmark for **active learning in object detection** on COCO-2017. Given a large unlabeled image pool and a small annotation budget, which images should you label to improve a detector the most?
 
-Run on an **ASU SOL A100** node via SLURM (`sol/run_tier1b_v2.sbatch`).
+This repo compares multiple acquisition strategies against **held-out human COCO labels** — never against teacher pseudo-labels. The benchmark implements two tracks:
 
-## Results — mAP50 (mean of 3 seeds, vs human TEST labels)
+- **Track A (Human-Label AL)**: COCO labels hidden during acquisition, revealed only for selected images
+- **Track B (Pseudo-Label Engine)**: Teacher (RT-DETR) pseudo-labels used for training; human labels only for final evaluation
 
-Mean mAP50 over 3 seeds (42/43/44), evaluated against human COCO TEST labels.
-These are the authoritative **tier1b_v2** results from the SOL A100 run
-(`results/tier1b_v2/tier1b_v2_aggregated.json`, started 2026-09-05, 45 result
-records; sha256 `3ef5acef…4191c93`).
-
-| Arm | K=250 | K=500 | K=1000 | vs random |
-|-----|------:|------:|-------:|----------:|
-| **entropy_div** (entropy + k-center) | **0.317** | 0.290 | 0.261 | best at K=250 |
-| **entropy** | 0.311 | **0.299** | **0.264** | +0.039 to +0.061 |
-| disagreement_div | 0.250 | 0.237 | 0.228 | ~parity |
-| random (baseline) | 0.250 | 0.231 | 0.225 | — |
-| disagreement | 0.227 | 0.222 | 0.215 | at/below random |
-
-![mAP50 by acquisition strategy across labeling budgets](results/tier1b_v2/tier1b_v2_map50.png)
-
-### Findings
-
-1. **Entropy sampling wins at every budget** — +0.061 (K=250), +0.068 (K=500),
-   +0.039 (K=1000) mAP50 over random, well above the seed-to-seed std.
-   A clean positive result.
-2. **Teacher-student disagreement does not beat random.** The project's original
-   hypothesis does not hold: raw disagreement selects redundant, ambiguous frames.
-3. **Diversity + entropy (`entropy_div`) is the top arm at K=250** (0.317) and
-   competitive elsewhere — diversity is worth combining with uncertainty, not
-   with disagreement (`disagreement_div` only reaches ~parity with random).
-4. **Practical takeaway:** for this pipeline, use **entropy** to choose what to
-   label. Reserve disagreement for *flagging* failures, not *selecting* data.
-
-### How the benchmark was made fair
-
-Three protocol fixes (see `scripts/run_tier1_experiment.py`), each validated:
-
-- **K-scaled training epochs** (`epochs_for_k`): the first run trained every
-  budget for a flat 15 epochs, which badly undertrained large-K runs and made
-  accuracy *fall* as data grew — an artifact, not a finding. Scaling epochs with
-  K flattened it (random K=1000 went 0.106 → 0.225). *No TEST data is used for
-  this; it depends only on the training-set size, so there is no leakage.*
-- **Diversity-aware selection** (k-center-greedy on ResNet18 embeddings) so
-  uncertainty arms stop picking near-duplicate frames.
-- **Pseudo-label confidence floor** (0.5): ~45% of teacher boxes scored below
-  0.5 (pure noise); dropping them cleans the training signal.
-
-## How the literature frames this
-
-- Uncertainty sampling (entropy / least-confidence / margin) is the classic,
-  reliable active-learning family (Settles, *Active Learning Literature Survey*, 2009).
-- Diversity matters — pick uncertain **and** varied samples (Sener & Savarese,
-  *Core-set / k-Center*, 2018; Ash et al., *BADGE*, 2020).
-- Teacher-student disagreement is central to knowledge distillation and
-  auto-labeling "data engines," but is used to **flag** failures, not as the best
-  **selection** signal — consistent with our negative result.
+Both tracks evaluate on the same held-out TEST set with human annotations.
 
 ---
 
-## Reproduce (< 30 min on a GPU, reusing cached teacher/student predictions)
+## Key results (Track A, 2 seeds × 2 budgets)
+
+| Method | mAP@50:95 (2%) | mAP@50:95 (4%) | mAP@50 (2%) | mAP@50 (4%) |
+|--------|----------------|----------------|-------------|-------------|
+| Random | **0.2821 ± 0.0021** | **0.3026 ± 0.0008** | **0.4137 ± 0.0023** | **0.4359 ± 0.0022** |
+| Max Entropy | 0.2839 ± 0.0045 | — | 0.4127 ± 0.0057 | — |
+| Mean Entropy | 0.2630 ± 0.0026 | 0.2984 ± 0.0021 | 0.3850 ± 0.0035 | 0.4263 ± 0.0031 |
+| Least Confidence | 0.2593 ± 0.0006 | — | 0.3891 ± 0.0021 | — |
+| Hybrid (Entropy + Div) | 0.2592 ± 0.0029 | — | 0.3790 ± 0.0025 | — |
+| Margin | 0.2450 ± 0.0025 | — | 0.3672 ± 0.0030 | — |
+
+**Takeaway**: The random baseline is competitive with or better than all tested acquisition methods. Max Entropy (top-1 instance) slightly edges out random at 2% on mAP@50:95, but the gap is within noise. Mean Entropy, Least Confidence, Margin, and Hybrid all underperform random.
+
+This aligns with active learning literature: uncertainty sampling helps most when the model is poorly calibrated or the pool has high diversity. On COCO with a strong RT-DETR teacher, the signal-to-noise ratio may not favor these heuristics.
+
+---
+
+## Benchmark design
+
+### Data splits (verified disjoint)
+- **TRAIN_POOL**: 4,000 COCO val2017 images (first 4,000 by COCO ID)
+- **TEST**: 1,000 held-out images (next 1,000 by COCO ID)
+- Labels: Human COCO annotations converted to YOLO format
+
+### Tracks
+
+| Track | Selection signal | Training labels | Eval labels |
+|-------|------------------|-----------------|-------------|
+| A (Human-Label AL) | Student uncertainty only | **Human labels revealed post-selection** | Human TEST |
+| B (Pseudo-Label Engine) | Teacher-student disagreement | Teacher pseudo-labels (conf ≥ 0.5) | Human TEST |
+
+### Acquisition arms (Track A)
+| Arm | Signal |
+|-----|--------|
+| Random | Uniform baseline |
+| Mean Entropy | Image-level mean binary entropy over detections |
+| Max Entropy | Image-level max binary entropy over detections |
+| Least Confidence | Image-level mean (1 - max class prob) |
+| Margin | Image-level mean (1 - (top1 - top2)) |
+| Hybrid | Mean Entropy + k-center-greedy diversity (ResNet18 embeddings) |
+
+### Protocol fixes (critical for fairness)
+1. **K-scaled epochs**: `epochs = round(base_epochs × ref_K / K)` — keeps optimizer steps constant across budgets
+2. **Diversity-aware selection**: k-center-greedy on ResNet18 embeddings prevents redundant frames
+3. **Pseudo-label confidence floor**: Drop teacher boxes with conf < 0.5 (~45% of boxes)
+4. **Leak-free evaluation**: Use `last.pt` (fixed schedule), never `best.pt` (selected on val=TEST)
+5. **Human labels hidden during acquisition** (Track A only revealed post-selection)
+
+---
+
+## Reproduce
 
 ```bash
+# 1. Environment
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-python -m pytest tests/ -q          # 65 tests (+1 data-gated skip): integrity, leakage, acquisition, prep
 
-# 1. Stage the fixed COCO subset (internet needed once)
+# 2. Run tests (77 tests: integrity, leakage, acquisition, dataset prep)
+python -m pytest tests/ -q
+
+# 3. Stage COCO-2017 subset (internet needed once, ~1 GB)
 python scripts/fetch_dataset.py --data-root data/coco2017 \
     --subset-name subset_4k --subset-size 5000 --train-size 4000
 
-# 2. Run the benchmark (GPU strongly recommended)
-python scripts/run_tier1_experiment.py \
-    --data-root data/coco2017 --output-dir results/tier1b_v2 \
-    --config configs/tier1b_v2.yaml \
-    --base-model yolov8n.pt --student-onnx models/yolov8n.onnx --device cuda
+# 4. Run Track A (Human-Label AL) — GPU recommended
+python scripts/benchmarks/run_active_learning_benchmark.py \
+    --data-root data/coco2017 --output-dir results/al_benchmark \
+    --config configs/al_benchmark.yaml \
+    --base-model yolov8n.pt --student-onnx models/yolov8n.onnx \
+    --device cuda --track A --budgets 2 4 6 8 10 --seeds 42 43 44 45 46
+
+# 5. Run Track B (Pseudo-Label Engine)
+python scripts/benchmarks/run_active_learning_benchmark.py \
+    --data-root data/coco2017 --output-dir results/al_benchmark \
+    --config configs/al_benchmark.yaml \
+    --base-model yolov8n.pt --student-onnx models/yolov8n.onnx \
+    --device cuda --track B --budgets 2 4 6 8 10 --seeds 42 43 44 45 46
+
+# 6. Generate figures
+python scripts/visualize_results.py --results-dir results/al_benchmark/trackA \
+    --output-dir docs/figures --metric mAP50_95
 ```
 
-Outputs: `results/tier1b_v2/tier1b_v2_aggregated.json` (mean±std per arm/K),
-`tier1b_v2_map50.png` (the plot), and `tier1b_v2.log` (per-run source of truth).
+Outputs: `results/al_benchmark/trackA/al_benchmark_aggregated.json`, `al_benchmark_summary.json`, and figures in `docs/figures/`.
 
-## Repository layout
+---
+
+## Repository structure
 
 ```
-src/aecs_sdc/       benchmark package (acquisition, disagreement, dataset, tier1, ...)
-scripts/            run_tier1_experiment.py, fetch_dataset.py, retrain_experiment.py
-configs/            tier1b_v2.yaml (main sweep), probe.yaml, benchmark.yaml
-tests/              65 tests + 1 data-gated skip across 11 files: dataset integrity, split leakage, acquisition, prep
-sol/                A100 SLURM scripts + COMMANDS.md (cluster run recipe)
-results/tier1b_v2/  aggregated JSON, mAP50 plot, per-run log
-models/yolov8n.onnx committed student model
-supervisor/         LEGACY live-hardware prototype (see note below) — not the benchmark
+edge-detection-active-learning/
+├── src/edgeal/                 # Main package (pip install -e .)
+│   ├── acquisition.py          # Acquisition functions (entropy, LC, margin, hybrid, etc.)
+│   ├── coco_label_map.py       # COCO ↔ YOLO class mapping
+│   ├── config.py               # Config dataclasses
+│   ├── dataset.py              # Clip/label loading utilities
+│   ├── disagreement.py         # Teacher-student disagreement metrics
+│   ├── embeddings.py           # ResNet18 image embeddings for diversity
+│   ├── evaluator.py            # Benchmark evaluation & reporting
+│   ├── harvest.py              # Harvest policies (threshold/budget/diversity)
+│   ├── logging_config.py       # Loguru setup
+│   ├── retrain.py              # YOLO fine-tuning helpers
+│   ├── student.py              # YOLOv8n ONNX wrapper (fixed entropy)
+│   ├── teacher.py              # RT-DETR teacher wrapper
+│   └── tier1.py                # Tier-1 experiment helpers
+├── scripts/
+│   ├── benchmarks/
+│   │   └── run_active_learning_benchmark.py  # Main benchmark (Track A + B)
+│   ├── fetch_dataset.py        # COCO subset staging
+│   ├── retrain_experiment.py   # Legacy retrain script
+│   ├── benchmark_edge.py       # ONNX CPU latency benchmark
+│   └── visualize_results.py    # Publication figures generator
+├── configs/
+│   ├── al_benchmark.yaml       # Main benchmark config
+│   └── tier1b_v2.yaml          # Legacy tier1 config
+├── tests/                      # 77 unit/integration tests
+├── docs/figures/               # Generated figures (PNG + PDF)
+├── legacy/                     # Moved legacy code (supervisor, isaac_bridge, etc.)
+├── data/                       # Staged COCO subsets (gitignored)
+├── models/                     # Committed models (yolov8n.onnx, .pt)
+├── results/                    # Benchmark outputs (gitignored)
+├── pyproject.toml              # Package metadata (name: edgeal)
+├── requirements.txt            # Pinned dependencies
+└── LICENSE                     # MIT
 ```
 
 ---
 
-## Legacy prototype (not the benchmark — read this)
+## Architecture
 
-`supervisor/`, `isaac_bridge/`, `dashboard/`, `clips/`, and `PAPER_FINAL.txt` are
-an earlier **live-hardware prototype** (Raspberry Pi student + laptop RT-DETR
-teacher + WebSocket + dashboard). It runs and produced ~685 auto-labeled clips,
-but its metrics are pseudo-ground-truth (teacher-as-truth) and the drone sensor
-integration was not exercised (sensor values are zero in the stored data). **The
-credible, human-label-evaluated result is the Tier-1B benchmark above.** Treat
-the legacy path as an engineering demo, not as validated science, and note that
-`PAPER_FINAL.txt` predates — and does not reflect — the honest benchmark findings.
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        EDGEAL PIPELINE                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────┐   │
+│  │ Unlabeled    │     │ Student      │     │ Acquisition      │   │
+│  │ Pool         │────▶│ (YOLOv8n     │────▶│ Function         │   │
+│  │ (TRAIN_POOL) │     │  ONNX)       │     │ (Uncertainty/    │   │
+│  └──────────────┘     │ Uncertainty  │     │  Diversity)      │   │
+│                       └──────────────┘     └────────┬─────────┘   │
+│                                                      │             │
+│                       ┌──────────────┐               ▼             │
+│                       │ Teacher      │     ┌──────────────────┐   │
+│                       │ (RT-DETR)    │     │ Select Top-K     │   │
+│                       │ Pseudo-Labels│     │ Images           │   │
+│                       └──────────────┘     └────────┬─────────┘   │
+│                                                      │             │
+│                     ┌──────────────┐               ▼             │
+│                     │ Track A      │     ┌──────────────────┐   │
+│                     │ Reveal Human │     │ Prepare YOLO     │   │
+│                     │ Labels Only  │────▶│ Dataset          │   │
+│                     │ For Selected │     │ (Human Labels)   │   │
+│                     └──────────────┘     └────────┬─────────┘   │
+│                                                  │             │
+│                                                  ▼             │
+│                                    ┌────────────────────────┐  │
+│                                    │ Fine-tune YOLOv8n      │  │
+│                                    │ (K-scaled epochs,      │  │
+│                                    │  last.pt checkpoint)   │  │
+│                                    └────────────┬───────────┘  │
+│                                                 │              │
+│                                                 ▼              │
+│                                    ┌────────────────────────┐  │
+│                                    │ Evaluate on Held-out   │  │
+│                                    │ Human TEST (COCO)      │  │
+│                                    │ mAP@50:95, mAP@50,     │  │
+│                                    │ AP_small/medium/large  │  │
+│                                    └────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Generated figures
+
+| Figure | Description |
+|--------|-------------|
+| `map_vs_budget_mAP50_95.png` | mAP@50:95 vs annotation budget with error bars |
+| `map_vs_budget_mAP50.png` | mAP@50 vs annotation budget |
+| `track_comparison_mAP50_95.png` | Track A vs Track B comparison (when both run) |
+| `uncertainty_radar_mAP50_95_10pct.png` | Uncertainty signal comparison radar chart |
+| `al_pipeline.png` | Pipeline architecture diagram |
+| `results_table_mAP50_95.md/csv/tex` | Publication-ready results tables |
+
+---
+
+## Citation
+
+```bibtex
+@misc{edgeal2026,
+  title = {EdgeAL: Active Learning for Edge Object Detection},
+  author = {Pachghare, Rhutvik},
+  year = {2026},
+  note = {Benchmark suite for label-efficient object detection on COCO}
+}
+```
+
+---
+
+## License
+
+MIT License — see `LICENSE` for details.
+
+---
 
 ## Security note
 
-Rotate any credential that was ever committed to `.env`; use `.env.example` as
-the template and keep real secrets out of the repo.
-```
+Rotate any credential that was ever committed to `.env`; use `.env.example` as the template and keep real secrets out of the repo.

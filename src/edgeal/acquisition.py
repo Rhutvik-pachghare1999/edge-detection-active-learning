@@ -1,6 +1,6 @@
 """Acquisition functions for active-learning frame selection.
 
-All scoring is done against the TRAIN_POOL only.  The held-out TEST set is never
+All scoring is done against the TRAIN_POOL only. The held-out TEST set is never
 used for selection.
 """
 
@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from aecs_sdc.disagreement import _box_disagreement
+from edgeal.disagreement import _box_disagreement
 
 
 def disagreement_score(teacher_result: dict, student_result: dict) -> float:
@@ -34,6 +34,45 @@ def entropy_score(student_result: dict) -> float:
     return float(student_result.get("entropy", 0.0))
 
 
+def image_entropy_score(student_result: dict) -> float:
+    """Image-level mean entropy across all detections (proper active learning signal)."""
+    img_unc = student_result.get("image_uncertainty", {})
+    return float(img_unc.get("mean_entropy", 0.0))
+
+
+def image_max_entropy_score(student_result: dict) -> float:
+    """Image-level max entropy across all detections."""
+    img_unc = student_result.get("image_uncertainty", {})
+    return float(img_unc.get("max_entropy", 0.0))
+
+
+def image_least_confidence_score(student_result: dict) -> float:
+    """Image-level mean least-confidence across all detections."""
+    img_unc = student_result.get("image_uncertainty", {})
+    return float(img_unc.get("mean_least_confidence", 0.0))
+
+
+def image_max_least_confidence_score(student_result: dict) -> float:
+    """Image-level max least-confidence across all detections."""
+    img_unc = student_result.get("image_uncertainty", {})
+    return float(img_unc.get("max_least_confidence", 0.0))
+
+
+def image_margin_score(student_result: dict) -> float:
+    """Image-level mean margin across all detections (lower = more uncertain)."""
+    img_unc = student_result.get("image_uncertainty", {})
+    # Margin: higher confidence gap = more certain, so invert
+    mean_margin = float(img_unc.get("mean_margin", 1.0))
+    return float(1.0 - mean_margin)
+
+
+def image_min_margin_score(student_result: dict) -> float:
+    """Image-level min margin across all detections (most uncertain instance)."""
+    img_unc = student_result.get("image_uncertainty", {})
+    min_margin = float(img_unc.get("min_margin", 1.0))
+    return float(1.0 - min_margin)
+
+
 def score_frames(
     teacher_results: Dict[str, dict],
     student_results: Dict[str, dict],
@@ -42,19 +81,49 @@ def score_frames(
     """Return ``{frame_id: acquisition_score}`` for a given mode.
 
     Modes:
-        * ``disagreement``  -- corrected teacher-student disagreement
-        * ``entropy``       -- student prediction entropy
-        * ``random``        -- uniform (score is ignored by ``select_random_k``)
+        * ``disagreement``      -- corrected teacher-student disagreement (requires teacher)
+        * ``entropy``           -- student top-anchor entropy (legacy)
+        * ``image_entropy``     -- image-level mean instance entropy
+        * ``image_max_entropy`` -- image-level max instance entropy
+        * ``least_confidence``  -- image-level mean least-confidence
+        * ``max_least_confidence`` -- image-level max least-confidence
+        * ``margin``            -- image-level mean margin (inverted)
+        * ``min_margin``        -- image-level min margin (inverted)
+        * ``random``            -- uniform (score is ignored by ``select_random_k``)
     """
     scores: Dict[str, float] = {}
-    common_ids = set(teacher_results.keys()) & set(student_results.keys())
-    for frame_id in common_ids:
+    
+    # For student-only modes, use all student keys; for disagreement, need intersection
+    student_only_modes = {
+        "entropy", "image_entropy", "image_max_entropy", 
+        "least_confidence", "max_least_confidence", 
+        "margin", "min_margin", "random"
+    }
+    
+    if mode in student_only_modes:
+        candidate_ids = set(student_results.keys())
+    else:
+        candidate_ids = set(teacher_results.keys()) & set(student_results.keys())
+    
+    for frame_id in candidate_ids:
         if mode == "disagreement":
             scores[frame_id] = disagreement_score(
                 teacher_results[frame_id], student_results[frame_id]
             )
         elif mode == "entropy":
             scores[frame_id] = entropy_score(student_results[frame_id])
+        elif mode == "image_entropy":
+            scores[frame_id] = image_entropy_score(student_results[frame_id])
+        elif mode == "image_max_entropy":
+            scores[frame_id] = image_max_entropy_score(student_results[frame_id])
+        elif mode == "least_confidence":
+            scores[frame_id] = image_least_confidence_score(student_results[frame_id])
+        elif mode == "max_least_confidence":
+            scores[frame_id] = image_max_least_confidence_score(student_results[frame_id])
+        elif mode == "margin":
+            scores[frame_id] = image_margin_score(student_results[frame_id])
+        elif mode == "min_margin":
+            scores[frame_id] = image_min_margin_score(student_results[frame_id])
         elif mode == "random":
             scores[frame_id] = 0.0
         else:
@@ -101,11 +170,17 @@ def select_subset(
     """Select a training subset of size ``k`` using ``mode``.
 
     Modes:
-        * ``random``        -- uniform seed-controlled sampling
-        * ``disagreement``  -- top-K teacher-student disagreement
-        * ``entropy``       -- top-K student entropy
-        * ``hybrid``        -- normalized disagreement/entropy + k-center-greedy
-                               diversity on image embeddings
+        * ``random``              -- uniform seed-controlled sampling
+        * ``disagreement``        -- top-K teacher-student disagreement
+        * ``entropy``             -- top-K student top-anchor entropy (legacy)
+        * ``image_entropy``       -- top-K image-level mean instance entropy
+        * ``image_max_entropy``   -- top-K image-level max instance entropy
+        * ``least_confidence``    -- top-K image-level mean least-confidence
+        * ``max_least_confidence`` -- top-K image-level max least-confidence
+        * ``margin``              -- top-K image-level mean margin (inverted)
+        * ``min_margin``          -- top-K image-level min margin (inverted)
+        * ``hybrid``              -- normalized uncertainty + k-center-greedy
+                                       diversity on image embeddings
     """
     if mode == "random":
         return select_random_k(train_ids, k, seed)
@@ -142,9 +217,9 @@ def hybrid_selection(
     """Select ``k`` frames maximizing normalized uncertainty + diversity.
 
     Diversity is enforced by weighted k-center-greedy on the provided image
-    embeddings.  Both the uncertainty scores and the min-distance-to-selected
+    embeddings. Both the uncertainty scores and the min-distance-to-selected
     values are min-max normalized to [0, 1] per iteration so the weighted sum is
-    scale-free.  Ties are broken first by distance (prefer spread), then by
+    scale-free. Ties are broken first by distance (prefer spread), then by
     deterministic frame_id order.
     """
     if k <= 0:

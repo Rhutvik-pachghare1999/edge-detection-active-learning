@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 
-from aecs_sdc.config import Config
+from edgeal.config import Config
 
 
 def test_config_loads_default_yaml():

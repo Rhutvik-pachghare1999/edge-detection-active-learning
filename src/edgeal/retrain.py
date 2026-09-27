@@ -143,8 +143,13 @@ def train_yolo_model(
     batch: int = 8,
     device: Optional[str] = None,
     base_model: str = "yolov8n.pt",
+    save_checkpoints: bool = True,
 ) -> Optional[Path]:
-    """Train a YOLOv8 model and return the path to best.pt."""
+    """Train a YOLOv8 model and return the path to best.pt.
+    
+    Args:
+        save_checkpoints: If True, saves best.pt and last.pt. If False, no checkpoints saved.
+    """
     try:
         from ultralytics import YOLO
     except Exception as e:
@@ -173,15 +178,20 @@ def train_yolo_model(
             exist_ok=True,
             verbose=False,
             plots=False,
-            save=False,
+            save=save_checkpoints,  # Fixed: now configurable
             workers=0,
             deterministic=True,
         )
-        best = output_dir / run_name / "weights" / "best.pt"
-        if not best.exists():
-            # Fallback to last.pt if best.pt is missing.
-            best = output_dir / run_name / "weights" / "last.pt"
-        return best if best.exists() else None
+        if save_checkpoints:
+            best = output_dir / run_name / "weights" / "best.pt"
+            if not best.exists():
+                # Fallback to last.pt if best.pt is missing.
+                best = output_dir / run_name / "weights" / "last.pt"
+            return best if best.exists() else None
+        else:
+            # When save=False, no checkpoint is written; return None
+            logger.warning("save_checkpoints=False: no checkpoint saved")
+            return None
     except Exception as e:
         logger.error(f"Training failed for {run_name}: {e}")
         return None

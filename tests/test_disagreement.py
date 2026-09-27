@@ -2,7 +2,7 @@
 
 import pytest
 
-from aecs_sdc.disagreement import compute_disagreement, compute_student_teacher_agreement, _iou
+from edgeal.disagreement import compute_disagreement, compute_student_teacher_agreement, _iou
 
 
 def _box(label, cx, cy, bw, bh, score=0.9):
