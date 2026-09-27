@@ -199,19 +199,19 @@ edge-detection-active-learning/
 
 | mAP@50:95 | mAP@50 |
 |-----------|--------|
-| ![mAP@50:95 vs Budget](docs/figures/map_vs_budget_mAP50_95.png) | ![mAP@50 vs Budget](docs/figures/map_vs_budget_mAP50.png) |
+| <img src="docs/figures/map_vs_budget_mAP50_95.png" alt="mAP@50:95 vs Budget" width="520"> | <img src="docs/figures/map_vs_budget_mAP50.png" alt="mAP@50 vs Budget" width="520"> |
 
 ### Track Comparison (when both tracks run)
 
-![Track Comparison](docs/figures/track_comparison_mAP50_95.png)
+<img src="docs/figures/track_comparison_mAP50_95.png" alt="Track Comparison" width="1060">
 
 ### Uncertainty Signal Radar Chart (10% Budget)
 
-![Uncertainty Radar](docs/figures/uncertainty_radar_mAP50_95_10pct.png)
+<img src="docs/figures/uncertainty_radar_mAP50_95_10pct.png" alt="Uncertainty Radar" width="600">
 
 ### Pipeline Architecture
 
-![Pipeline](docs/figures/al_pipeline.png)
+<img src="docs/figures/al_pipeline.png" alt="Pipeline" width="1060">
 
 ### Results Tables
 
