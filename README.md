@@ -88,6 +88,9 @@ Both tracks evaluate on the same held-out TEST set with human annotations.
 
 ## Reproduce
 
+**Reproduction scope:** `python -m pytest tests/ -q` checks evaluation code and data-integrity guards; it does not retrain a detector or reproduce the COCO benchmark. Full Track A/B commands require the staged COCO images/labels and compatible GPU dependencies. Published artifacts are available in [benchmark_results](benchmark_results/edgeal_benchmark_aggregated.json) and the [Tier-1B aggregate](results/tier1b_v2/tier1b_v2_aggregated.json). [Experiment status and caveats](docs/RESULTS.md) distinguish completed runs from historical plans.
+
+
 ```bash
 # 1. Environment
 python -m venv venv && source venv/bin/activate
