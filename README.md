@@ -8,14 +8,20 @@
 
 ## What this is
 
-A rigorous, leakage-free benchmark for **active learning in object detection** on COCO-2017. Given a large unlabeled image pool and a small annotation budget, which images should you label to improve a detector the most?
+If you only have the budget to label a few images, which ones should
+you pick? I built EdgeAL to compare that question directly, rather than
+assuming uncertainty sampling would be better than random selection.
 
-This repo compares multiple acquisition strategies against **held-out human COCO labels** — never against teacher pseudo-labels. The benchmark implements two tracks:
+The benchmark uses COCO-2017 and evaluates against held-out human
+annotations. It has two tracks:
 
-- **Track A (Human-Label AL)**: COCO labels hidden during acquisition, revealed only for selected images
-- **Track B (Pseudo-Label Engine)**: Teacher (RT-DETR) pseudo-labels used for training; human labels only for final evaluation
+- **Track A:** keep human labels hidden during selection; reveal them
+  only for the images that were chosen.
+- **Track B:** train using RT-DETR teacher pseudo-labels, but still
+  evaluate on the same held-out human-labeled test set.
 
-Both tracks evaluate on the same held-out TEST set with human annotations.
+The code keeps data splits, acquisition methods, and evaluation separate
+so the comparison is inspectable. Results and run instructions are below.
 
 ---
 
