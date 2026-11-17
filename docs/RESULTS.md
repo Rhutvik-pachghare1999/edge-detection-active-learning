@@ -4,8 +4,7 @@ This file records the results produced by the committed benchmark code.
 
 - **Legacy 50-clip benchmark** — results below were produced by `benchmark.py` on
   the committed 50-clip subset.
-- **Tier-1 COCO benchmark** — results are pending the first SOL A100 run. No
-  numbers are reported until the human-labeled COCO TEST evaluation completes.
+- **Tier-1 COCO benchmark** — the original pending-run note is historical. Reduced-pilot and Tier-1B A100 outcomes are documented below. See the [committed Tier-1B aggregate](../results/tier1b_v2/tier1b_v2_aggregated.json) and [Track A/B benchmark aggregates](../benchmark_results/edgeal_benchmark_aggregated.json) for their specific protocols. These do not imply every budget/seed sweep finished.
 
 All numbers are reproducible from the committed code, models, and configs.
 
